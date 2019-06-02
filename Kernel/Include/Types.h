@@ -11,6 +11,12 @@ extern "C" {
 // void
 typedef void Void, * VoidPtr;
 
+#ifdef __cplusplus
+typedef bool Bool;
+#else
+typedef char Bool;
+#endif
+
 // 1 byte
 typedef char SByte, * SBytePtr;
 typedef unsigned char Byte, * BytePtr;
