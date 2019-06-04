@@ -4,23 +4,23 @@
 
 #pragma once
 
-#include "GdtDescriptor.hpp"
+#include "GdtSegmentDescriptor.hpp"
 
 class GdtWrapper {
 protected:
-    GdtDescriptor* Table;
+    GdtSegmentDescriptor* Table;
     UShort Count;
 };
 
 #pragma pack(push, 1)
 
-struct GdtLoadDescriptor32 {
-    GdtLoadDescriptor32(UShort count, GdtDescriptor* address) :
-        Size(sizeof(GdtDescriptor) * count - 1),
-        Address(address)
+struct GdtLoadDescriptor {
+    GdtLoadDescriptor(UShort count, GdtSegmentDescriptor* address) :
+        Size(sizeof(GdtSegmentDescriptor) * count - 1),
+        Address(address){}
     
     UShort Size;
-    GdtDescriptor* Address;
+    GdtSegmentDescriptor* Address;
 };
 
 #pragma pack(pop)

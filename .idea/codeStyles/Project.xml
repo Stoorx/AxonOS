@@ -33,30 +33,31 @@
       <option name="INSERT_VIRTUAL_WITH_OVERRIDE" value="true" />
       <option name="ADD_BRIEF_TAG" value="true" />
       <option name="TAG_PREFIX_OF_LINE_COMMENT" value="AT" />
-      <option name="GETTERS_PREFIX" value="Get" />
-      <option name="SETTERS_PREFIX" value="Set" />
+      <option name="HEADER_GUARD_STYLE_PATTERN" value="${FILE_NAME}_${EXT}" />
+      <option name="NAMESPACES_NAMING_CONVENTION">
+        <value prefix="" style="PASCAL_CASE" suffix="" />
+      </option>
+      <option name="CLASSES_AND_STRUCTS_NAMING_CONVENTION">
+        <value prefix="" style="PASCAL_CASE" suffix="" />
+      </option>
+      <option name="ENUMS_NAMING_CONVENTION">
+        <value prefix="" style="PASCAL_CASE" suffix="" />
+      </option>
+      <option name="UNIONS_NAMING_CONVENTION">
+        <value prefix="" style="PASCAL_CASE" suffix="" />
+      </option>
+      <option name="METHODS_NAMING_CONVENTION">
+        <value prefix="" style="PASCAL_CASE" suffix="" />
+      </option>
+      <option name="GLOBAL_FUNCTIONS_NAMING_CONVENTION">
+        <value prefix="" style="PASCAL_CASE" suffix="" />
+      </option>
+      <option name="GLOBAL_VARIABLES_NAMING_CONVENTION">
+        <value prefix="" style="PASCAL_CASE" suffix="" />
+      </option>
     </Objective-C>
     <Objective-C-extensions>
       <option name="TAG_PREFIX_OF_LINE_COMMENT" value="AT" />
-      <file>
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Import" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Macro" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Typedef" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Enum" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Constant" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Global" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Struct" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="FunctionPredecl" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Function" />
-      </file>
-      <class>
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Property" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Synthesize" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="InitMethod" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="StaticMethod" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="InstanceMethod" />
-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="DeallocMethod" />
-      </class>
       <extensions>
         <pair source="cpp" header="hpp" fileNamingConvention="PASCAL_CASE" />
         <pair source="c" header="h" fileNamingConvention="CAMEL_CASE" />
