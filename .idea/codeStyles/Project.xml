@@ -33,28 +33,6 @@
       <option name="INSERT_VIRTUAL_WITH_OVERRIDE" value="true" />
       <option name="ADD_BRIEF_TAG" value="true" />
       <option name="TAG_PREFIX_OF_LINE_COMMENT" value="AT" />
-      <option name="HEADER_GUARD_STYLE_PATTERN" value="${FILE_NAME}_${EXT}" />
-      <option name="NAMESPACES_NAMING_CONVENTION">
-        <value prefix="" style="PASCAL_CASE" suffix="" />
-      </option>
-      <option name="CLASSES_AND_STRUCTS_NAMING_CONVENTION">
-        <value prefix="" style="PASCAL_CASE" suffix="" />
-      </option>
-      <option name="ENUMS_NAMING_CONVENTION">
-        <value prefix="" style="PASCAL_CASE" suffix="" />
-      </option>
-      <option name="UNIONS_NAMING_CONVENTION">
-        <value prefix="" style="PASCAL_CASE" suffix="" />
-      </option>
-      <option name="METHODS_NAMING_CONVENTION">
-        <value prefix="" style="PASCAL_CASE" suffix="" />
-      </option>
-      <option name="GLOBAL_FUNCTIONS_NAMING_CONVENTION">
-        <value prefix="" style="PASCAL_CASE" suffix="" />
-      </option>
-      <option name="GLOBAL_VARIABLES_NAMING_CONVENTION">
-        <value prefix="" style="PASCAL_CASE" suffix="" />
-      </option>
     </Objective-C>
     <Objective-C-extensions>
       <option name="TAG_PREFIX_OF_LINE_COMMENT" value="AT" />
