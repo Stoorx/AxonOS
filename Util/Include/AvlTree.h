@@ -31,7 +31,8 @@ typedef Int (*PAVL_TREE_NODES_COMPARATOR)(PAVL_TREE_NODE aFirst, PAVL_TREE_NODE 
 enum RtlAvlTreeComparatorResult {
     Equals = 0,
     Greater = 1,
-    Less = -1
+    Less = -1,
+    ComparisionError = -2
 };
 struct _AVL_TREE {
     PAVL_TREE_NODE Root;

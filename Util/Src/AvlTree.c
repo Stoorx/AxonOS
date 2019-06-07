@@ -88,7 +88,7 @@ PAVL_TREE_NODE RtlpAvlTreeInsertRecursive(PAVL_TREE Tree, PAVL_TREE_NODE Current
         else return NULL;
     }
     else {
-        return NULL;
+        return NULL; // Value found or comparision error
     }
     
     return RtlpAvlTreeSubtreeBalance(CurrentNode);
@@ -108,11 +108,14 @@ PAVL_TREE_NODE RtlpAvlTreeSearchRecursive(PAVL_TREE Tree, PAVL_TREE_NODE Current
             return RtlpAvlTreeSearchRecursive(Tree, CurrentNode->Right, Node);
         else return NULL;
     }
-    else {
+    
+    if (compareResult == Less) {
         if (CurrentNode->Left != NULL)
             return RtlpAvlTreeSearchRecursive(Tree, CurrentNode->Left, Node);
         else return NULL;
     }
+    
+    return NULL;
 }
 
 PAVL_TREE_NODE RtlpAvlTreeGetLowestSubtreeNode(PAVL_TREE_NODE Subtree) {
@@ -152,7 +155,7 @@ PAVL_TREE_NODE RtlpAvlTreeRemoveRecursive(
             CurrentNode->Left = tmpNode;
         else return NULL;
     }
-    else {
+    else if(compareResult == Equals){
         *DeletedNode = CurrentNode;
         PAVL_TREE_NODE leftChild  = CurrentNode->Left;
         PAVL_TREE_NODE rightChild = CurrentNode->Right;
