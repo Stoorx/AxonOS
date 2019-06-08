@@ -15,6 +15,8 @@ typedef void Void, * VoidPtr;
 typedef bool Bool;
 #else
 typedef char Bool;
+    #define true 1
+    #define false 0
 #endif
 
 // 1 byte
@@ -37,6 +39,10 @@ typedef unsigned long long ULong, * ULongPtr;
 typedef float Float, * FloatPtr;
 typedef double Double, * DoublePtr;
 typedef long double LongDouble, * LongDoublePtr;
+
+// Machine dependent
+typedef long SWord, * SWordPtr;
+typedef unsigned long Word, * WordPtr;
 
 #ifdef __cplusplus
 };
