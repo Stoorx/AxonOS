@@ -9,65 +9,65 @@
 //
 // Private functions ---- ---- ---- ---- ---- ---- ---- ----
 //
-UShort RtlpAvlTreeGetSubtreeHeight(PAVL_TREE_NODE Node) {
+UShort AvlTree$GetSubtreeHeight(AvlTreeNodePtr Node) {
     return Node ? Node->Height : (UShort)0;
 }
 
-Int RtlpAvlTreeGetSubtreeBalance(PAVL_TREE_NODE Node) {
-    return RtlpAvlTreeGetSubtreeHeight(Node->Right) -
-           RtlpAvlTreeGetSubtreeHeight(Node->Left);
+Int AvlTree$getSubtreeBalance(AvlTreeNodePtr Node) {
+    return AvlTree$GetSubtreeHeight(Node->Right) -
+           AvlTree$GetSubtreeHeight(Node->Left);
 }
 
-Void RtlpAvlTreeChangeHeight(PAVL_TREE_NODE Node) {
-    UShort heightLeft  = RtlpAvlTreeGetSubtreeHeight(Node->Left);
-    UShort heightRight = RtlpAvlTreeGetSubtreeHeight(Node->Right);
+Void AvlTree$ChangeHeight(AvlTreeNodePtr Node) {
+    UShort heightLeft  = AvlTree$GetSubtreeHeight(Node->Left);
+    UShort heightRight = AvlTree$GetSubtreeHeight(Node->Right);
     
     Node->Height = (heightLeft > heightRight ? heightLeft : heightRight) + (UShort)1;
 }
 
-PAVL_TREE_NODE RtlpAvlTreeSwitchRight(PAVL_TREE_NODE Node) {
-    PAVL_TREE_NODE tmpNode = Node->Left;
+AvlTreeNodePtr AvlTree$SwitchRight(AvlTreeNodePtr Node) {
+    AvlTreeNodePtr tmpNode = Node->Left;
     Node->Left     = tmpNode->Right;
     tmpNode->Right = Node;
     
-    RtlpAvlTreeChangeHeight(Node);
-    RtlpAvlTreeChangeHeight(tmpNode);
+    AvlTree$ChangeHeight(Node);
+    AvlTree$ChangeHeight(tmpNode);
     
     return tmpNode;
 }
 
-PAVL_TREE_NODE RtlpAvlTreeSwitchLeft(PAVL_TREE_NODE Node) {
-    PAVL_TREE_NODE tmpNode = Node->Right;
+AvlTreeNodePtr AvlTree$switchLeft(AvlTreeNodePtr Node) {
+    AvlTreeNodePtr tmpNode = Node->Right;
     Node->Right   = tmpNode->Left;
     tmpNode->Left = Node;
     
-    RtlpAvlTreeChangeHeight(Node);
-    RtlpAvlTreeChangeHeight(tmpNode);
+    AvlTree$ChangeHeight(Node);
+    AvlTree$ChangeHeight(tmpNode);
     
     return tmpNode;
 }
 
-PAVL_TREE_NODE RtlpAvlTreeSubtreeBalance(PAVL_TREE_NODE Node) {
-    RtlpAvlTreeChangeHeight(Node);
+AvlTreeNodePtr AvlTree$subtreeBalance(AvlTreeNodePtr Node) {
+    AvlTree$ChangeHeight(Node);
     
-    Int diff = RtlpAvlTreeGetSubtreeBalance(Node);
+    Int diff = AvlTree$getSubtreeBalance(Node);
     
     if (diff == 2) {
-        if (RtlpAvlTreeGetSubtreeBalance(Node->Right) < 0) {
-            Node->Right = RtlpAvlTreeSwitchRight(Node->Right);
+        if (AvlTree$getSubtreeBalance(Node->Right) < 0) {
+            Node->Right = AvlTree$SwitchRight(Node->Right);
         }
-        return RtlpAvlTreeSwitchLeft(Node);
+        return AvlTree$switchLeft(Node);
     }
     else if (diff == -2) {
-        if (RtlpAvlTreeGetSubtreeBalance(Node->Left) > 0) {
-            Node->Left = RtlpAvlTreeSwitchLeft(Node->Left);
+        if (AvlTree$getSubtreeBalance(Node->Left) > 0) {
+            Node->Left = AvlTree$switchLeft(Node->Left);
         }
-        return RtlpAvlTreeSwitchRight(Node);
+        return AvlTree$SwitchRight(Node);
     }
     return Node;
 }
 
-PAVL_TREE_NODE RtlpAvlTreeInsertRecursive(PAVL_TREE Tree, PAVL_TREE_NODE CurrentNode, PAVL_TREE_NODE Node) {
+AvlTreeNodePtr AvlTree$insertRecursive(AvlTreePtr Tree, AvlTreeNodePtr CurrentNode, AvlTreeNodePtr Node) {
     if (CurrentNode == NULL) {
         Node->Height = 1;
         Node->Right  = NULL;
@@ -76,13 +76,13 @@ PAVL_TREE_NODE RtlpAvlTreeInsertRecursive(PAVL_TREE Tree, PAVL_TREE_NODE Current
     }
     Int compareResult = Tree->Comparator(Node, CurrentNode);
     if (compareResult == Greater) {
-        PAVL_TREE_NODE tmp = RtlpAvlTreeInsertRecursive(Tree, CurrentNode->Right, Node);
+        AvlTreeNodePtr tmp = AvlTree$insertRecursive(Tree, CurrentNode->Right, Node);
         if (tmp != NULL)
             CurrentNode->Right = tmp;
         else return NULL;
     }
     else if (compareResult == Less) {
-        PAVL_TREE_NODE tmp = RtlpAvlTreeInsertRecursive(Tree, CurrentNode->Left, Node);
+        AvlTreeNodePtr tmp = AvlTree$insertRecursive(Tree, CurrentNode->Left, Node);
         if (tmp != NULL)
             CurrentNode->Left = tmp;
         else return NULL;
@@ -91,10 +91,10 @@ PAVL_TREE_NODE RtlpAvlTreeInsertRecursive(PAVL_TREE Tree, PAVL_TREE_NODE Current
         return NULL;
     }
     
-    return RtlpAvlTreeSubtreeBalance(CurrentNode);
+    return AvlTree$subtreeBalance(CurrentNode);
 }
 
-PAVL_TREE_NODE RtlpAvlTreeSearchRecursive(PAVL_TREE Tree, PAVL_TREE_NODE CurrentNode, PAVL_TREE_NODE Node) {
+AvlTreeNodePtr AvlTree$searchRecursive(AvlTreePtr Tree, AvlTreeNodePtr CurrentNode, AvlTreeNodePtr Node) {
     if (CurrentNode == NULL)
         return NULL;
     
@@ -105,63 +105,63 @@ PAVL_TREE_NODE RtlpAvlTreeSearchRecursive(PAVL_TREE Tree, PAVL_TREE_NODE Current
     
     if (compareResult == Greater) {
         if (CurrentNode->Right != NULL)
-            return RtlpAvlTreeSearchRecursive(Tree, CurrentNode->Right, Node);
+            return AvlTree$searchRecursive(Tree, CurrentNode->Right, Node);
         else return NULL;
     }
     else {
         if (CurrentNode->Left != NULL)
-            return RtlpAvlTreeSearchRecursive(Tree, CurrentNode->Left, Node);
+            return AvlTree$searchRecursive(Tree, CurrentNode->Left, Node);
         else return NULL;
     }
 }
 
-PAVL_TREE_NODE RtlpAvlTreeGetLowestSubtreeNode(PAVL_TREE_NODE Subtree) {
-    PAVL_TREE_NODE currentNode = Subtree;
+AvlTreeNodePtr AvlTree$getLowestSubtreeNode(AvlTreeNodePtr Subtree) {
+    AvlTreeNodePtr currentNode = Subtree;
     while (currentNode->Left != NULL) {
         currentNode = currentNode->Left;
     }
     return currentNode;
 }
 
-PAVL_TREE_NODE RtlpAvlTreeRemoveMinSubtreeRecursive(PAVL_TREE_NODE Subtree) {
+AvlTreeNodePtr AvlTree$removeMinSubtreeRecursive(AvlTreeNodePtr Subtree) {
     if (Subtree->Left == NULL)
         return Subtree->Right;
-    Subtree->Left = RtlpAvlTreeRemoveMinSubtreeRecursive(Subtree->Left);
-    return RtlpAvlTreeSubtreeBalance(Subtree);
+    Subtree->Left = AvlTree$removeMinSubtreeRecursive(Subtree->Left);
+    return AvlTree$subtreeBalance(Subtree);
 }
 
-PAVL_TREE_NODE RtlpAvlTreeRemoveRecursive(
-    PAVL_TREE Tree,
-    PAVL_TREE_NODE CurrentNode,
-    PAVL_TREE_NODE Node,
-    PAVL_TREE_NODE* DeletedNode
+AvlTreeNodePtr AvlTree$removeRecursive(
+    AvlTreePtr Tree,
+    AvlTreeNodePtr CurrentNode,
+    AvlTreeNodePtr Node,
+    AvlTreeNodePtr* DeletedNode
 ) {
     if (CurrentNode == NULL)
         return NULL;
     
     Int compareResult = Tree->Comparator(Node, CurrentNode);
     if (compareResult == Greater) {
-        PAVL_TREE_NODE tmpNode = RtlpAvlTreeRemoveRecursive(Tree, CurrentNode->Right, Node, DeletedNode);
+        AvlTreeNodePtr tmpNode = AvlTree$removeRecursive(Tree, CurrentNode->Right, Node, DeletedNode);
         if (DeletedNode != NULL)
             CurrentNode->Right = tmpNode;
         else return NULL;
     }
     else if (compareResult == Less) {
-        PAVL_TREE_NODE tmpNode = RtlpAvlTreeRemoveRecursive(Tree, CurrentNode->Left, Node, DeletedNode);
+        AvlTreeNodePtr tmpNode = AvlTree$removeRecursive(Tree, CurrentNode->Left, Node, DeletedNode);
         if (DeletedNode != NULL)
             CurrentNode->Left = tmpNode;
         else return NULL;
     }
     else {
         *DeletedNode = CurrentNode;
-        PAVL_TREE_NODE leftChild  = CurrentNode->Left;
-        PAVL_TREE_NODE rightChild = CurrentNode->Right;
+        AvlTreeNodePtr leftChild  = CurrentNode->Left;
+        AvlTreeNodePtr rightChild = CurrentNode->Right;
         if (rightChild == NULL)
             return leftChild;
-        PAVL_TREE_NODE minNode = RtlpAvlTreeGetLowestSubtreeNode(rightChild);
-        minNode->Right = RtlpAvlTreeRemoveMinSubtreeRecursive(rightChild);
+        AvlTreeNodePtr minNode = AvlTree$getLowestSubtreeNode(rightChild);
+        minNode->Right = AvlTree$removeMinSubtreeRecursive(rightChild);
         minNode->Left  = leftChild;
-        return RtlpAvlTreeSubtreeBalance(minNode);
+        return AvlTree$subtreeBalance(minNode);
     }
     return CurrentNode;
 }
@@ -170,7 +170,7 @@ PAVL_TREE_NODE RtlpAvlTreeRemoveRecursive(
 // Functions ---- ---- ---- ---- ---- ---- ---- ----
 //
 
-Void RtlAvlTreeInitialize(PAVL_TREE Tree, PAVL_TREE_NODES_COMPARATOR Comparator) {
+Void AvlTree$AvlTree(AvlTreePtr Tree, AvlTreeNodesComparatorPtr Comparator) {
     Tree->Root          = NULL;
     Tree->Comparator    = Comparator;
     Tree->InsertCounter = 0;
@@ -178,8 +178,8 @@ Void RtlAvlTreeInitialize(PAVL_TREE Tree, PAVL_TREE_NODES_COMPARATOR Comparator)
     Tree->SearchCounter = 0;
 }
 
-Int RtlAvlTreeInsert(PAVL_TREE Tree, PAVL_TREE_NODE Node) {
-    PAVL_TREE_NODE newRoot = RtlpAvlTreeInsertRecursive(Tree, Tree->Root, Node);
+Int AvlTree$Insert(AvlTreePtr Tree, AvlTreeNodePtr Node) {
+    AvlTreeNodePtr newRoot = AvlTree$insertRecursive(Tree, Tree->Root, Node);
     if (newRoot != NULL) {
         Tree->Root = newRoot;
         Tree->InsertCounter++;
@@ -190,39 +190,39 @@ Int RtlAvlTreeInsert(PAVL_TREE Tree, PAVL_TREE_NODE Node) {
     }
 }
 
-PAVL_TREE_NODE RtlAvlTreeSearch(PAVL_TREE Tree, PAVL_TREE_NODE Node) {
-    PAVL_TREE_NODE foundNode = RtlpAvlTreeSearchRecursive(Tree, Tree->Root, Node);
+AvlTreeNodePtr AvlTree$Search(AvlTreePtr Tree, AvlTreeNodePtr Node) {
+    AvlTreeNodePtr foundNode = AvlTree$searchRecursive(Tree, Tree->Root, Node);
     Tree->SearchCounter++;
     return foundNode;
 }
 
-PAVL_TREE_NODE RtlAvlTreeGetLowestNode(PAVL_TREE Tree) {
+AvlTreeNodePtr AvlTree$GetLowestNode(AvlTreePtr Tree) {
     if (Tree->Root == NULL)
         return NULL;
     
-    PAVL_TREE_NODE currentNode = Tree->Root;
+    AvlTreeNodePtr currentNode = Tree->Root;
     while (currentNode->Left != NULL) {
         currentNode = currentNode->Left;
     }
     return currentNode;
 }
 
-PAVL_TREE_NODE RtlAvlTreeGetHighestNode(PAVL_TREE Tree) {
+AvlTreeNodePtr AvlTree$GetHighestNode(AvlTreePtr Tree) {
     if (Tree->Root == NULL)
         return NULL;
     
-    PAVL_TREE_NODE currentNode = Tree->Root;
+    AvlTreeNodePtr currentNode = Tree->Root;
     while (currentNode->Right != NULL) {
         currentNode = currentNode->Right;
     }
     return currentNode;
 }
 
-PAVL_TREE_NODE RtlAvlTreeRemove(PAVL_TREE Tree, PAVL_TREE_NODE Node) {
+AvlTreeNodePtr AvlTree$Remove(AvlTreePtr Tree, AvlTreeNodePtr Node) {
     if (Tree->Root == NULL)
         return NULL;
-    PAVL_TREE_NODE deletedNode = NULL;
-    PAVL_TREE_NODE newRoot     = RtlpAvlTreeRemoveRecursive(Tree, Tree->Root, Node, &deletedNode);
+    AvlTreeNodePtr deletedNode = NULL;
+    AvlTreeNodePtr newRoot     = AvlTree$removeRecursive(Tree, Tree->Root, Node, &deletedNode);
     if (deletedNode != NULL) {
         Tree->Root = newRoot;
         Tree->DeleteCounter++;

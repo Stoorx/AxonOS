@@ -11,21 +11,21 @@ public:
     explicit TestValueNode(Int value) {
         Value = value;
         Node.debugValue = value;
-        Node.Right  = nullptr;
-        Node.Left   = nullptr;
-        Node.Height = 0;
+        Node.Right      = nullptr;
+        Node.Left       = nullptr;
+        Node.Height     = 0;
     }
     
-    AVL_TREE_NODE Node;
-    Int           Value;
+    AvlTreeNode Node;
+    Int         Value;
 };
 
 TEST_CASE("AVL Tree") {
     srand(1);
-    AVL_TREE tree;
-    RtlAvlTreeInitialize(
+    AvlTree tree;
+    AvlTree$AvlTree(
         &tree,
-        [](PAVL_TREE_NODE first, PAVL_TREE_NODE second) -> Int {
+        [](AvlTreeNodePtr first, AvlTreeNodePtr second) -> Int {
             auto firstValueNode  = PARENT_STRUCTURE(first, TestValueNode, Node);
             auto secondValueNode = PARENT_STRUCTURE(second, TestValueNode, Node);
             return (firstValueNode->Value == secondValueNode->Value)
@@ -47,7 +47,7 @@ TEST_CASE("AVL Tree") {
                 // Search
                 Int  value          = (rand() % 100) - 50;
                 auto testNode       = TestValueNode(value);
-                auto resultNode     = RtlAvlTreeSearch(&tree, &testNode.Node);
+                auto resultNode     = AvlTree$Search(&tree, &testNode.Node);
                 auto stdResultValue = stdTree.find(value);
                 if (resultNode != nullptr) {
                     REQUIRE(stdResultValue != stdTree.end());
@@ -61,27 +61,29 @@ TEST_CASE("AVL Tree") {
             }
             case 1: {
                 // Insert
-                Int value = (rand() % 100) - 50;
+                Int  value     = (rand() % 100) - 50;
                 auto stdResult = stdTree.insert(value);
-                auto node = new TestValueNode(value);
-                auto result = RtlAvlTreeInsert(&tree, &node->Node);
-                if(result != -1){
+                auto node      = new TestValueNode(value);
+                auto result    = AvlTree$Insert(&tree, &node->Node);
+                if (result != -1) {
                     REQUIRE(stdResult.second);
-                }else{
+                }
+                else {
                     REQUIRE(!stdResult.second);
                 }
                 break;
             }
             case 2: {
                 // Delete
-                Int value = (rand() % 100) - 50;
+                Int  value     = (rand() % 100) - 50;
                 auto stdResult = stdTree.erase(value);
-                auto tmpNode = TestValueNode(value);
-                auto nodePtr = RtlAvlTreeRemove(&tree, &tmpNode.Node);
-                if(nodePtr != nullptr){
+                auto tmpNode   = TestValueNode(value);
+                auto nodePtr   = AvlTree$Remove(&tree, &tmpNode.Node);
+                if (nodePtr != nullptr) {
                     REQUIRE(stdResult == 1);
                     delete nodePtr;
-                }else{
+                }
+                else {
                     INFO("i=" << i);
                     REQUIRE(stdResult == 0);
                 }
