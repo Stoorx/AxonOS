@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  Main Boot Record                    ;;
+;;  Volume Boot Record for FAT32        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                                      ;;
 ;;                                      ;;
@@ -17,10 +17,6 @@
 ;;  |    MBR stack (2 KB)    |          ;;
 ;;  +------------------------+ 01000H   ;;
 ;;  |   BootLoader (508 KB)  |          ;;
-;;  +------------------------+ 07C00H   ;;
-;;  |          MBR           |          ;;
-;;  +------------------------+ 07E00H   ;;
-;;  |       Free space       |          ;;
 ;;  +------------------------+ 80000H   ;;
 ;;  |    Available Memory    |          ;;
 ;;  +------------------------+ 9FC00H   ;;
@@ -30,12 +26,11 @@
 ;;  +------------------------+ FFFFFH   ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-%define RELOCATED_ADDR 0x7C00
+%define RELOCATED_ADDR 0x600
 %define BOOT_ADDR 0x7C00
-%define VBR_BOOT_ADDR 0x600
-%define MBR_STACK 0x1000
+%define VBR_STACK 0x1000
 %define BOOTLOADER_ADDR 0x1000
-%define MBR_SIZE 512
+%define VBR_SIZE 512
 %define PARTITION_TABLE_ADDR (RELOCATED_ADDR + 0x1BE)
 %define PARTITION_ENTRIES_COUNT 4
 %define ACTIVE_PARTITION_FLAG 0x80
@@ -43,63 +38,73 @@
 %define PARTITION_ENTRY_SIZE 0x10
 %define PARTITION_LBA_OFFSET 0x8
 %define BOOT_SIGNATURE_ADDR (BOOT_ADDR + 0x1FE)
-%define VBR_BOOT_SIGNATURE_ADDR (VBR_BOOT_ADDR + 0x1FE)
 
 [BITS 16]
 [ORG RELOCATED_ADDR]
+start:
+    jmp short entry
+    nop
+bsOemName:               DB      "AxonBoot"      ; 0x03
+
+; BPB1:
+bpbBytesPerSector:       dw      0               ; 0x0B
+bpbSectorsPerCluster:    db      0               ; 0x0D
+bpbReservedSectors:      dw      0               ; 0x0E
+bpbNumberOfFATs:         db      0               ; 0x10
+bpbRootEntries:          dw      0               ; 0x11
+bpbTotalSectors:         dw      0               ; 0x13
+bpbMedia:                db      0               ; 0x15
+bpbSectorsPerFAT:        dw      0               ; 0x16
+bpbSectorsPerTrack:      dw      0               ; 0x18
+bpbHeadsPerCylinder:     dw      0               ; 0x1A
+bpbHiddenSectors:        dd      0               ; 0x1C
+bpbTotalSectorsBig:      dd      0               ; 0x20
+
+; BPB2:
+bsSectorsPerFAT32:               dd      0               ; 0x24
+bsExtendedFlags:                 dw      0               ; 0x28
+bsFSVersion:                     dw      0               ; 0x2A
+bsRootDirectoryClusterNo:        dd      0               ; 0x2C
+bsFSInfoSectorNo:                dw      0               ; 0x30
+bsBackupBootSectorNo:            dw      0               ; 0x32
+bsreserved:             times 12 db      0               ; 0x34
+bsDriveNumber:                   db      0               ; 0x40
+bsreserved1:                     db      0               ; 0x41
+bsExtendedBootSignature:         db      0               ; 0x42
+bsVolumeSerialNumber:            dd      0               ; 0x43
+;                                        "123456789AB"
+bsVolumeLabel:                   db      "Axon system"   ; 0x47
+bsFileSystemName:                db      "FAT32   "      ; 0x52
+
+; Code start
 entry:
-    ; init registers
-    xor ax, ax
-    mov ds, ax
-    mov es, ax
-    mov ss, ax
+    ; Context:
+    ; AX = 0
+    ; ES, DS, SS, CS = 0
+    ; DL = drive number
+    ; IP = 0x600
 
-    ; copying to new address
-;    mov sp, MBR_STACK
-;    mov si, BOOT_ADDR
-;    mov di, RELOCATED_ADDR
-;    mov cx, MBR_SIZE
-;    cld
-;    rep movsb
+    mov     [bsDriveNumber], dl     ; store BIOS boot drive number
 
-    ; jump to new location
-    jmp 0:relocated
+calculate_first_data_sector:
+    movzx eax, byte [bpbNumberOfFATs]
+    mul dword [bsSectorsPerFAT32]
+    add eax, word [bpbReservedSectors] ; result in eax
+    push eax
 
-relocated:
-    push dx ; store disk number
 
-    ; Clear screen
-    mov ax, 0x3
-    int 0x10
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Function: get_first_sector_of_cluster   ;;
+;;  Args: EAX = cluster number              ;;
+;;        EBX = first data sector           ;;
+;;  Output: EAX = number of sector          ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+get_first_sector_of_cluster:
+    sub eax, 2
+    mul eax, byte [bpbSectorsPerCluster]
+    add ebx
+    ret
 
-    ; Prepare read
-    mov cx, PARTITION_ENTRIES_COUNT
-    mov bx, PARTITION_TABLE_ADDR
-
-boot_partition_loop:
-    cmp byte [bx], ACTIVE_PARTITION_FLAG
-    je short read_active_bootsector
-    cmp byte [bx], PASSIVE_PARTITION_FLAG
-    jne invalid_partition_table
-    add bx, PARTITION_ENTRY_SIZE
-    loop boot_partition_loop
-
-    ; if active partition not found
-    jmp active_partition_not_found
-
-read_active_bootsector:
-    sti
-check_edd_extensions:
-    push bx ; push active partition
-
-    mov ah, 0x41 ; function
-    mov bx, 0x55AA
-    int 0x13
-    jb edd_not_supported
-    cmp bx, 0xAA55
-    jne edd_not_supported
-    test cx, 0x0001
-    jz edd_not_supported
 
 ; Perform an INT 13 extended read of the first sector of the partition,
 ; and load it into memory where the MBR was loaded. The extended read
@@ -120,7 +125,7 @@ read_vbr:
 
     push dword 0x0 ; Push starting sector high.
     push dword [bx + PARTITION_LBA_OFFSET]
-    push dword VBR_BOOT_ADDR
+    push dword BOOT_ADDR
     push word 0x1 ; Push the sector count.
     push word 0x10 ; Push reserved and packet size.
 
@@ -133,18 +138,12 @@ read_vbr:
     jc read_error
 
 check_bootloader:
-    cmp word [VBR_BOOT_SIGNATURE_ADDR], 0xAA55
+    cmp word [BOOT_SIGNATURE_ADDR], 0xAA55
     jne invalid_vbr_signature
     xor dh, dh
-    ; Prepare context
-    xor ax, ax
-    mov ds, ax
-    mov ss, ax
-    mov es, ax
-    mov sp, MBR_STACK
-    cli
+
     ; jump to VBR code
-    jmp 0x0:VBR_BOOT_ADDR
+    jmp 0x0:BOOT_ADDR
 ;;                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; End of useful code       ;;
@@ -206,6 +205,12 @@ db "Error: 0x"
 error_code:
 dw 0x3030
 db 0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Data: bootloader name   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+bootloader_name:
+db "AXONBOOT   "
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Developer signature     ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
