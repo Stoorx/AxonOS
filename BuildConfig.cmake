@@ -1,3 +1,5 @@
+set(DIST_DIR ${CMAKE_SOURCE_DIR}/Dist)
+
 set(TARGET_ARCHITECTURE "x86")
 
 set(NASM_EXECUTABLE "nasm")

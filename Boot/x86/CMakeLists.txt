@@ -9,3 +9,12 @@ add_custom_command(
         DEPENDS ${ASM_SOURCE}
 )
 add_custom_target(x86_MBR ${ASM_OUT} DEPENDS ${ASM_OUT})
+
+add_custom_command(
+        OUTPUT ${DIST_DIR}/Boot/MBR.bin
+        COMMAND ${CMAKE_COMMAND}
+        ARGS -E copy ${ASM_OUT} ${DIST_DIR}/Boot/MBR.bin
+        DEPENDS ${ASM_OUT}
+)
+
+add_custom_target(x86_MBR_dist ${DIST_DIR}/Boot/MBR.bin DEPENDS ${DIST_DIR}/Boot/MBR.bin)

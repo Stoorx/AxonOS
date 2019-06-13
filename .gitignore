@@ -1,4 +1,5 @@
 
 cmake-build-debug/
+Dist/
 
 \.idea/workspace\.xml
