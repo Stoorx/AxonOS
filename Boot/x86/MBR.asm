@@ -32,6 +32,7 @@
 
 %define RELOCATED_ADDR 0x7C00
 %define BOOT_ADDR 0x7C00
+%define VBR_BOOT_ADDR 0x600
 %define MBR_STACK 0x1000
 %define BOOTLOADER_ADDR 0x1000
 %define MBR_SIZE 512
@@ -42,6 +43,7 @@
 %define PARTITION_ENTRY_SIZE 0x10
 %define PARTITION_LBA_OFFSET 0x8
 %define BOOT_SIGNATURE_ADDR (BOOT_ADDR + 0x1FE)
+%define VBR_BOOT_SIGNATURE_ADDR (VBR_BOOT_ADDR + 0x1FE)
 
 [BITS 16]
 [ORG RELOCATED_ADDR]
@@ -118,7 +120,7 @@ read_vbr:
 
     push dword 0x0 ; Push starting sector high.
     push dword [bx + PARTITION_LBA_OFFSET]
-    push dword BOOT_ADDR
+    push dword VBR_BOOT_ADDR
     push word 0x1 ; Push the sector count.
     push word 0x10 ; Push reserved and packet size.
 
@@ -131,7 +133,7 @@ read_vbr:
     jc read_error
 
 check_bootloader:
-    cmp word [BOOT_SIGNATURE_ADDR], 0xAA55
+    cmp word [VBR_BOOT_SIGNATURE_ADDR], 0xAA55
     jne invalid_vbr_signature
     xor dh, dh
     ; Prepare context
@@ -142,7 +144,7 @@ check_bootloader:
     mov sp, MBR_STACK
     cli
     ; jump to VBR code
-    jmp 0x0:BOOT_ADDR
+    jmp 0x0:VBR_BOOT_ADDR
 ;;                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; End of useful code       ;;
