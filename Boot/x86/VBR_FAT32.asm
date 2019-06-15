@@ -85,13 +85,40 @@ entry:
     ; IP = 0x600
 
     mov     [bsDriveNumber], dl     ; store BIOS boot drive number
+    mov bp, sp
 
 calculate_first_data_sector:
     movzx eax, byte [bpbNumberOfFATs]
     mul dword [bsSectorsPerFAT32]
-    add eax, word [bpbReservedSectors] ; result in eax
+    add eax, word [bpbReservedSectors]
+    add eax, dword [bpbHiddenSectors] ; result in eax
     push eax
 
+find_file:
+    mov eax, dword [bsRootDirectoryClusterNo]
+    mov ebx, [bp - 4] ; first data cluster
+    call get_first_sector_of_cluster
+
+    mov di, 0x1000
+    mov edx, di
+
+    ; TODO: calculate limit
+    movzx ecx, byte [bpbSectorsPerCluster]
+    call read_sectors
+
+    mov si, bootloader_name
+    mov ecx, 11
+    repe cmpsb ; check name
+    jcxz file_found
+    add di, 32
+
+    ; TODO: check di and make a loop
+
+
+
+
+file_found:
+    ; TODO: load file
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Function: get_first_sector_of_cluster   ;;
@@ -105,37 +132,34 @@ get_first_sector_of_cluster:
     add ebx
     ret
 
-
-; Perform an INT 13 extended read of the first sector of the partition,
-; and load it into memory where the MBR was loaded. The extended read
-; takes a disk packet that looks like this:
-; Offset 0, size 1: Size of packet (16 or 24 bytes).
-; Offset 1, size 1: Reserved (0).
-; Offset 2, size 2: Number of blocks to transfer.
-; Offset 4, size 4: Transfer buffer.
-; Offset 8, size 8: Absolute starting sector.
-; Offset 0x10, size 8: 64-bit flat address of transfer buffer. Only used
-; if the value at offset 4 is 0xFFFFFFFF (which it is not in this case).
-;
-; Remember that things need to be pushed on in reverse.
-
-read_vbr:
-    pop bx ; pop active partition
-    pop dx ; pop disk number
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Function: read_sectors                  ;;
+;;  Args: EAX = start sector number         ;;
+;;        ES:DI = start address             ;;
+;;        ECX = sectors count               ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+read_sectors:
+push eax
+push edx
+push esi
     push dword 0x0 ; Push starting sector high.
-    push dword [bx + PARTITION_LBA_OFFSET]
-    push dword BOOT_ADDR
-    push word 0x1 ; Push the sector count.
+    push eax ; Push starting sector low.
+    push es ; Buffer segment.
+    push di ; Buffer offset.
+    push cx ; Push the sector count.
     push word 0x10 ; Push reserved and packet size.
 
     clc
     mov ah, 0x42 ; Function 0x42, extended read.
-    ;mov dl, dl ; Load the drive number.
+    mov dl, byte [bsDriveNumber] ; Load the drive number.
     mov si, sp ; SI points to the disk packet address.
     int 0x13 ; Read the sector from the disk.
     add sp, 0x10
     jc read_error
+pop esi
+pop edx
+pop eax
+    ret
 
 check_bootloader:
     cmp word [BOOT_SIGNATURE_ADDR], 0xAA55
