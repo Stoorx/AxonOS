@@ -14,7 +14,9 @@
 ;;  +------------------------+ 00600H   ;;
 ;;  |          VBR           |          ;;
 ;;  +------------------------+ 00800H   ;;
-;;  |    MBR stack (2 KB)    |          ;;
+;;  |      Buffer (1 KB)     |          ;;
+;;  +------------------------+ 00C00H   ;;
+;;  |    MBR stack (1 KB)    |          ;;
 ;;  +------------------------+ 01000H   ;;
 ;;  |   BootLoader (508 KB)  |          ;;
 ;;  +------------------------+ 80000H   ;;
@@ -29,6 +31,10 @@
 %define RELOCATED_ADDR 0x600
 %define BOOT_ADDR 0x7C00
 %define VBR_STACK 0x1000
+%define FS_BUFFER 0x800
+%define FS_BUFFER_END 0xC00
+%define FS_BUFFER_SIZE 0x400
+%define FS_BUFFER_SIZE_IN_SECTORS 0x2
 %define BOOTLOADER_ADDR 0x1000
 %define VBR_SIZE 512
 %define PARTITION_TABLE_ADDR (RELOCATED_ADDR + 0x1BE)
@@ -38,6 +44,9 @@
 %define PARTITION_ENTRY_SIZE 0x10
 %define PARTITION_LBA_OFFSET 0x8
 %define BOOT_SIGNATURE_ADDR (BOOT_ADDR + 0x1FE)
+
+%define FIRST_DATA_SECTOR_VAL_ADDRESS (VBR_STACK - 4)
+%define FIRST_FAT_SECTOR_VAL_ADDRESS (VBR_STACK - 8)
 
 [BITS 16]
 [ORG RELOCATED_ADDR]
@@ -86,36 +95,87 @@ entry:
 
     mov     [bsDriveNumber], dl     ; store BIOS boot drive number
     mov bp, sp
+    add sp, 8
 
 calculate_first_data_sector:
     movzx eax, byte [bpbNumberOfFATs]
     mul dword [bsSectorsPerFAT32]
     add eax, word [bpbReservedSectors]
     add eax, dword [bpbHiddenSectors] ; result in eax
-    push eax
+    mov dword [FIRST_DATA_SECTOR_VAL_ADDRESS], eax
+
+    mov eax, word [bpbReservedSectors]
+    add eax, dword [bpbHiddenSectors]
+    mov dword [FIRST_FAT_SECTOR_VAL_ADDRESS], eax
+
+    ; TODO: OPTIMIZE!
 
 find_file:
-    mov eax, dword [bsRootDirectoryClusterNo]
-    mov ebx, [bp - 4] ; first data cluster
+
+;; EAX - misc
+;; EBX - current cluster
+;; ECX - misc, counter
+;; EDX - current cluster part
+
+    mov ebx, bsRootDirectoryClusterNo
+    mov eax, dword [ebx]
+
+cluster_chain_loop:
     call get_first_sector_of_cluster
+    mov edx, eax ; current sector of cluster is stored in edx
 
-    mov di, 0x1000
-    mov edx, di
-
-    ; TODO: calculate limit
-    movzx ecx, byte [bpbSectorsPerCluster]
+cluster_part_loop:
+    mov eax, edx
+    mov di, FS_BUFFER
+    mov ecx, FS_BUFFER_SIZE_IN_SECTORS
     call read_sectors
 
-    mov si, bootloader_name
-    mov ecx, 11
-    repe cmpsb ; check name
-    jcxz file_found
-    add di, 32
 
-    ; TODO: check di and make a loop
+    mov eax, FS_BUFFER ; first data record
+    file_records_loop:
+        mov si, eax
+        mov di, bootloader_name
+        mov ecx, 11
+        repe cmpsb
+        jcxz file_found ; if repe reaches equality of strings
+        add eax, 32 ; size of file record
+        cmp eax, FS_BUFFER_END
+        jb file_records_loop ; if we are in buffer
+
+    add edx, FS_BUFFER_SIZE
+    mov eax, edx
+    add eax, byte [bpbSectorsPerCluster] ; end of cluster
+    cmp edx, eax
+    jb cluster_part_loop
+
+; find next cluster
+    mov eax, ebx
+    add eax, 2
+    ; FAT[eax]
+    mov ecx, 4
+    mul ecx ; in eax offset of FAT entry
+    mov ebx, eax
+    shr eax, 10
+    add eax, dword [FIRST_FAT_SECTOR_VAL_ADDRESS] ; eax contains current fat piece
+    and ebx, 0b1111111111 ; ebx contains offset in buffer
+
+    mov di, FS_BUFFER
+    mov ecx, FS_BUFFER_SIZE_IN_SECTORS
+    call read_sectors
+
+    mov ecx, ebx
+    add ecx, FS_BUFFER
+    mov eax, dword [ecx] ; fat entry
+    and eax, 0x0FFFFFFF
+    cmp eax, 0x0FFFFFF8
+    jae file_not_found ; if it is the last cluster
+    mov ebx, eax
+    jmp cluster_chain_loop
 
 
 
+file_not_found:
+    ; TODO: ecxeption
 
 file_found:
     ; TODO: load file
@@ -123,13 +183,12 @@ file_found:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Function: get_first_sector_of_cluster   ;;
 ;;  Args: EAX = cluster number              ;;
-;;        EBX = first data sector           ;;
 ;;  Output: EAX = number of sector          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 get_first_sector_of_cluster:
     sub eax, 2
     mul eax, byte [bpbSectorsPerCluster]
-    add ebx
+    add dword [FIRST_DATA_SECTOR_VAL_ADDRESS]
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -161,13 +220,7 @@ pop edx
 pop eax
     ret
 
-check_bootloader:
-    cmp word [BOOT_SIGNATURE_ADDR], 0xAA55
-    jne invalid_vbr_signature
-    xor dh, dh
 
-    ; jump to VBR code
-    jmp 0x0:BOOT_ADDR
 ;;                          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; End of useful code       ;;
@@ -175,25 +228,9 @@ check_bootloader:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Error handling          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-invalid_partition_table:
+file_not_found:
     ; error code "0x01"
     mov ax, 0x3130
-    call near print_error_and_hlt
-active_partition_not_found:
-    ; error code "0x02"
-    mov ax, 0x3230
-    call near print_error_and_hlt
-edd_not_supported:
-    ; error code "0x03"
-    mov ax, 0x3330
-    call near print_error_and_hlt
-read_error:
-    ; error code "0x04"
-    mov ax, 0x3430
-    call near print_error_and_hlt
-invalid_vbr_signature:
-    ; error code "0x05"
-    mov ax, 0x3530
     call near print_error_and_hlt
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -225,7 +262,7 @@ hlt_system:
 ;;  Data: error messages    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 error_msg:
-db "Error: 0x"
+db "VBR Error: 0x"
 error_code:
 dw 0x3030
 db 0
