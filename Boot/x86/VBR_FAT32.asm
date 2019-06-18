@@ -48,6 +48,7 @@
 %define FIRST_DATA_SECTOR_VAL_ADDRESS (VBR_STACK - 4)
 %define FIRST_FAT_SECTOR_VAL_ADDRESS (VBR_STACK - 8)
 %define BYTES_PER_CLUSTER_VAL_ADDRESS (VBR_STACK - 12)
+%define CURRENT_FAT_OFFSET_VAL_ADDRESS (VBR_STACK - 16)
 
 [BITS 16]
 [ORG RELOCATED_ADDR]
@@ -94,127 +95,136 @@ entry:
     ; DL = drive number
     ; IP = 0x600
 
-    mov [bsDriveNumber], dl     ; store BIOS boot drive number
-    mov bp, sp
-    sub sp, 8 ; reserve space for locals
+    mov byte [bsDriveNumber], dl     ; store BIOS boot drive number
+    sub sp, 16 ; reserve space for locals
 
-calculate_first_data_sector:
+main:
     movzx ebx, word [bpbReservedSectors]
     add ebx, dword [bpbHiddenSectors]
-    mov dword [FIRST_FAT_SECTOR_VAL_ADDRESS], ebx
+    mov dword [FIRST_FAT_SECTOR_VAL_ADDRESS], ebx ; calculate first fat sector number
+
     movzx eax, byte [bpbNumberOfFATs]
     mul dword [bsSectorsPerFAT32]
     add eax, ebx
-    mov dword [FIRST_DATA_SECTOR_VAL_ADDRESS], eax
+    mov dword [FIRST_DATA_SECTOR_VAL_ADDRESS], eax ; calculate first data sector
 
     movzx eax, byte [bpbSectorsPerCluster]
     mul word [bpbBytesPerSector]
-    mov dword [BYTES_PER_CLUSTER_VAL_ADDRESS], eax
+    mov dword [BYTES_PER_CLUSTER_VAL_ADDRESS], eax ; calculate bytes per cluster number
 
-find_file:
+    xor eax, eax
+    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; initialize fat frame cache
 
-;; EAX - misc
-;; EBX - current cluster
-;; ECX - misc, counter
-;; EDX - current cluster part
-
-    mov eax, dword [bsRootDirectoryClusterNo]
-
-cluster_chain_loop:
+search_file:
+    mov ebx, dword [bsRootDirectoryClusterNo] ; current cluster
+    mov eax, ebx ; prepare eax for function call
+cluster_chain_iterations:
     call get_first_sector_of_cluster
-    mov edx, eax ; current sector of cluster is stored in edx
-
-cluster_part_loop:
-    mov eax, edx
+    mov edx, eax ; edx contains number of current sector
+cluster_frame_iterations:
     mov di, FS_BUFFER
-    mov ecx, FS_BUFFER_SIZE_IN_SECTORS
+    mov cx, FS_BUFFER_SIZE_IN_SECTORS
     call read_sectors
 
+    mov ax, di ; first data record
+file_records_iterations:
+    mov si, ax
+    mov di, bootloader_name
+    mov cx, 11
+    repe cmpsb
+    jcxz file_found ; if repe reaches equality of strings
+    add ax, 32 ; size of file record
+    cmp ax, FS_BUFFER_END
+    jb short file_records_iterations ; if we are in buffer
 
-    mov eax, FS_BUFFER ; first data record
-    file_records_loop:
-        mov si, ax
-        mov di, bootloader_name
-        mov ecx, 11
-        repe cmpsb
-        jcxz file_found ; if repe reaches equality of strings
-        add eax, 32 ; size of file record
-        cmp eax, FS_BUFFER_END
-        jb file_records_loop ; if we are in buffer
-
-;; POTENTIAL BUG vvv
-    add edx, FS_BUFFER_SIZE
-    mov eax, edx
-    movzx ecx, byte [bpbSectorsPerCluster]
-    add eax, ecx ; end of cluster
-    cmp edx, eax
-    jb cluster_part_loop
-;; UNTIL HERE ^^^
-
-; find next cluster
+    add edx, FS_BUFFER_SIZE_IN_SECTORS ; move edx to next frame
     mov eax, ebx
-    add eax, 2
-    ; FAT[eax]
-    mov ecx, 4 ; fat entry is 4 bytes length
-    mul ecx ; in eax offset of FAT entry
-    mov ebx, eax
-    shr eax, 10
-    add eax, dword [FIRST_FAT_SECTOR_VAL_ADDRESS] ; eax contains current fat piece
-    and ebx, 0b1111111111 ; ebx contains offset in buffer
+    inc eax
+    call get_first_sector_of_cluster ; find next continuous cluster sector number
+    cmp edx, eax
+    jae short find_next_cluster_of_directory
+    mov eax, edx
+    jmp short cluster_frame_iterations
+find_next_cluster_of_directory:
+    mov eax, ebx
+    xor eax, eax
+    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; reset cache
+    call get_next_cluster
 
-    mov di, FS_BUFFER
-    mov ecx, FS_BUFFER_SIZE_IN_SECTORS
-    call read_sectors
-
-    add ebx, FS_BUFFER
-    mov eax, dword [bx] ; fat entry
-    and eax, 0x0FFFFFFF
     cmp eax, 0x0FFFFFF8
-    jae file_not_found ; if it is the last cluster
+    jae file_not_found ; we went through all clusters in chain but have not met the file
     mov ebx, eax
-    jmp cluster_chain_loop
+    jmp short cluster_chain_iterations
 
 file_found:
-    ; EAX - file record
-    mov ebx, eax
+    ; AX - file record
+    mov bx, ax
     movzx eax, word [bx + 0x14]
     shl eax, 16
     mov ax, word [bx + 0x1A] ; first cluster in eax
 
-    mov ecx, dword [bx + 0x1C] ; file size in ecx
-
     mov ebp, BOOTLOADER_ADDR ; current position in ebp
+    movzx cx, byte [bpbSectorsPerCluster]
 
 file_read_loop:
+;EBP - current position in memory
+;EAX - current cluster
     mov ebx, ebp
     shr ebx, 4
     mov es, bx
-    mov di, ebp
-    and di, 0xF
-
-    mov ebx, eax ; cluster number
+    mov di, bp
+    and di, 0xF ; normalize address
+    mov ebx, eax ; save cluster number
     call get_first_sector_of_cluster
-
-    mov edx, ecx ; save file size
-
-    movzx ecx, byte [bpbSectorsPerCluster]
     call read_sectors
-
-    xor eax, eax ; clear SF
-    sub edx, ecx
-    mov ecx, edx
-    js file_read_complete ; if we got negative size (SF is set)
-
-    add ebp, 7
-    ; find next cluster
-
-    mov eax, ebx
-
-; TODO!
-
-
+    inc eax
+    call get_next_cluster
+    cmp eax, 0x0FFFFFF8
+    jae file_read_complete
+    add ebp, dword [BYTES_PER_CLUSTER_VAL_ADDRESS] ; move ebp to next position
+    jmp short file_read_loop
 
 file_read_complete:
+    mov dl, byte [bsDriveNumber]
+    jmp BOOTLOADER_ADDR
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  HELPER FUNCTIONS                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;  Function: get_next_cluster              ;;
+;;  Args: EAX = current cluster number      ;;
+;;  Return: EAX = next cluster number       ;;
+;;  Side effect: changes buffer content     ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+get_next_cluster:
+push ebx
+    mov ebx, eax
+    shr eax, 8 ; eax contains fat frame number
+
+    cmp eax, dword [CURRENT_FAT_OFFSET_VAL_ADDRESS]
+    je next
+
+    ; load fat frame
+    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; update cache
+
+    shl eax, 1 ; mul by 2 because we have the buffer of two sectors size
+    add eax, dword [FIRST_FAT_SECTOR_VAL_ADDRESS]
+
+    xor bx, bx
+    mov es, bx
+    mov di, FS_BUFFER
+    mov ecx, FS_BUFFER_SIZE_IN_SECTORS
+    call read_sectors
+
+    next:
+    shl bx, 2 ; mul by 4 (size of fat entry)
+    add bx, FS_BUFFER
+    mov eax, dword [bx]
+    and eax, 0x0FFFFFFF
+pop ebx
+ret
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -223,23 +233,24 @@ file_read_complete:
 ;;  Output: EAX = number of sector          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 get_first_sector_of_cluster:
-    push edx
+push edx
     sub eax, 2
     mul byte [bpbSectorsPerCluster]
     add eax, dword [FIRST_DATA_SECTOR_VAL_ADDRESS]
-    pop edx
-    ret
+pop edx
+ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Function: read_sectors                  ;;
 ;;  Args: EAX = start sector number         ;;
 ;;        ES:DI = start address             ;;
-;;        ECX = sectors count               ;;
+;;        CX = sectors count                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 read_sectors:
 push eax
-push edx
-push esi
+push dx
+push si
+push di
     push dword 0x0 ; Push starting sector high.
     push eax ; Push starting sector low.
     push es ; Buffer segment.
@@ -254,10 +265,11 @@ push esi
     int 0x13 ; Read the sector from the disk.
     add sp, 0x10
     jc read_error
-pop esi
-pop edx
+pop di
+pop si
+pop dx
 pop eax
-    ret
+ret
 
 
 ;;                          ;;
@@ -314,10 +326,6 @@ db 0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 bootloader_name:
 db "AXONBOOT   "
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;  Developer signature     ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-db "VBR (c) Axon team, 2019", 0
 times (510-($-$$)) db 0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Boot signature          ;;
