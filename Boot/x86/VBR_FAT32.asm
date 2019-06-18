@@ -47,6 +47,7 @@
 
 %define FIRST_DATA_SECTOR_VAL_ADDRESS (VBR_STACK - 4)
 %define FIRST_FAT_SECTOR_VAL_ADDRESS (VBR_STACK - 8)
+%define BYTES_PER_CLUSTER_VAL_ADDRESS (VBR_STACK - 12)
 
 [BITS 16]
 [ORG RELOCATED_ADDR]
@@ -93,22 +94,22 @@ entry:
     ; DL = drive number
     ; IP = 0x600
 
-    mov     [bsDriveNumber], dl     ; store BIOS boot drive number
+    mov [bsDriveNumber], dl     ; store BIOS boot drive number
     mov bp, sp
-    add sp, 8
+    sub sp, 8 ; reserve space for locals
 
 calculate_first_data_sector:
+    movzx ebx, word [bpbReservedSectors]
+    add ebx, dword [bpbHiddenSectors]
+    mov dword [FIRST_FAT_SECTOR_VAL_ADDRESS], ebx
     movzx eax, byte [bpbNumberOfFATs]
     mul dword [bsSectorsPerFAT32]
-    add eax, word [bpbReservedSectors]
-    add eax, dword [bpbHiddenSectors] ; result in eax
+    add eax, ebx
     mov dword [FIRST_DATA_SECTOR_VAL_ADDRESS], eax
 
-    mov eax, word [bpbReservedSectors]
-    add eax, dword [bpbHiddenSectors]
-    mov dword [FIRST_FAT_SECTOR_VAL_ADDRESS], eax
-
-    ; TODO: OPTIMIZE!
+    movzx eax, byte [bpbSectorsPerCluster]
+    mul word [bpbBytesPerSector]
+    mov dword [BYTES_PER_CLUSTER_VAL_ADDRESS], eax
 
 find_file:
 
@@ -117,8 +118,7 @@ find_file:
 ;; ECX - misc, counter
 ;; EDX - current cluster part
 
-    mov ebx, bsRootDirectoryClusterNo
-    mov eax, dword [ebx]
+    mov eax, dword [bsRootDirectoryClusterNo]
 
 cluster_chain_loop:
     call get_first_sector_of_cluster
@@ -133,7 +133,7 @@ cluster_part_loop:
 
     mov eax, FS_BUFFER ; first data record
     file_records_loop:
-        mov si, eax
+        mov si, ax
         mov di, bootloader_name
         mov ecx, 11
         repe cmpsb
@@ -142,17 +142,20 @@ cluster_part_loop:
         cmp eax, FS_BUFFER_END
         jb file_records_loop ; if we are in buffer
 
+;; POTENTIAL BUG vvv
     add edx, FS_BUFFER_SIZE
     mov eax, edx
-    add eax, byte [bpbSectorsPerCluster] ; end of cluster
+    movzx ecx, byte [bpbSectorsPerCluster]
+    add eax, ecx ; end of cluster
     cmp edx, eax
     jb cluster_part_loop
+;; UNTIL HERE ^^^
 
 ; find next cluster
     mov eax, ebx
     add eax, 2
     ; FAT[eax]
-    mov ecx, 4
+    mov ecx, 4 ; fat entry is 4 bytes length
     mul ecx ; in eax offset of FAT entry
     mov ebx, eax
     shr eax, 10
@@ -163,22 +166,56 @@ cluster_part_loop:
     mov ecx, FS_BUFFER_SIZE_IN_SECTORS
     call read_sectors
 
-    mov ecx, ebx
-    add ecx, FS_BUFFER
-    mov eax, dword [ecx] ; fat entry
+    add ebx, FS_BUFFER
+    mov eax, dword [bx] ; fat entry
     and eax, 0x0FFFFFFF
     cmp eax, 0x0FFFFFF8
     jae file_not_found ; if it is the last cluster
     mov ebx, eax
     jmp cluster_chain_loop
 
-
-
-file_not_found:
-    ; TODO: ecxeption
-
 file_found:
-    ; TODO: load file
+    ; EAX - file record
+    mov ebx, eax
+    movzx eax, word [bx + 0x14]
+    shl eax, 16
+    mov ax, word [bx + 0x1A] ; first cluster in eax
+
+    mov ecx, dword [bx + 0x1C] ; file size in ecx
+
+    mov ebp, BOOTLOADER_ADDR ; current position in ebp
+
+file_read_loop:
+    mov ebx, ebp
+    shr ebx, 4
+    mov es, bx
+    mov di, ebp
+    and di, 0xF
+
+    mov ebx, eax ; cluster number
+    call get_first_sector_of_cluster
+
+    mov edx, ecx ; save file size
+
+    movzx ecx, byte [bpbSectorsPerCluster]
+    call read_sectors
+
+    xor eax, eax ; clear SF
+    sub edx, ecx
+    mov ecx, edx
+    js file_read_complete ; if we got negative size (SF is set)
+
+    add ebp, 7
+    ; find next cluster
+
+    mov eax, ebx
+
+; TODO!
+
+
+
+file_read_complete:
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Function: get_first_sector_of_cluster   ;;
@@ -186,9 +223,11 @@ file_found:
 ;;  Output: EAX = number of sector          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 get_first_sector_of_cluster:
+    push edx
     sub eax, 2
-    mul eax, byte [bpbSectorsPerCluster]
-    add dword [FIRST_DATA_SECTOR_VAL_ADDRESS]
+    mul byte [bpbSectorsPerCluster]
+    add eax, dword [FIRST_DATA_SECTOR_VAL_ADDRESS]
+    pop edx
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -232,7 +271,10 @@ file_not_found:
     ; error code "0x01"
     mov ax, 0x3130
     call near print_error_and_hlt
-
+read_error:
+    ; error code "0x04"
+    mov ax, 0x3430
+    call near print_error_and_hlt
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Printing function       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -275,7 +317,7 @@ db "AXONBOOT   "
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Developer signature     ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-db "MBR (c) Axon team, 2019", 0
+db "VBR (c) Axon team, 2019", 0
 times (510-($-$$)) db 0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Boot signature          ;;
