@@ -1,0 +1,2 @@
+add_executable(MakeImg MakeImg.cpp MakeImg.hpp ExitProcess.hpp ExitProcessException.hpp Main.cpp ExitProcessException.cpp ExitProcess.cpp DiskImage.cpp DiskImage.hpp)
+target_include_directories(MakeImg PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
