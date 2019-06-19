@@ -113,6 +113,7 @@ main:
     mov dword [BYTES_PER_CLUSTER_VAL_ADDRESS], eax ; calculate bytes per cluster number
 
     xor eax, eax
+    dec eax ; 0xFFFFFFFF
     mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; initialize fat frame cache
 
 search_file:
@@ -131,8 +132,9 @@ file_records_iterations:
     mov si, ax
     mov di, bootloader_name
     mov cx, 11
+    cld
     repe cmpsb
-    jcxz file_found ; if repe reaches equality of strings
+    je file_found ; if repe reaches equality of strings
     add ax, 32 ; size of file record
     cmp ax, FS_BUFFER_END
     jb short file_records_iterations ; if we are in buffer
@@ -200,6 +202,8 @@ file_read_complete:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 get_next_cluster:
 push ebx
+push es
+push di
     mov ebx, eax
     shr eax, 8 ; eax contains fat frame number
 
@@ -223,6 +227,8 @@ push ebx
     add bx, FS_BUFFER
     mov eax, dword [bx]
     and eax, 0x0FFFFFFF
+pop di
+pop es
 pop ebx
 ret
 
@@ -316,7 +322,7 @@ hlt_system:
 ;;  Data: error messages    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 error_msg:
-db "VBR Error: 0x"
+db "E:0x"
 error_code:
 dw 0x3030
 db 0
