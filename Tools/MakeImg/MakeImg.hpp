@@ -8,6 +8,8 @@
 #include <vector>
 #include <ExitProcess.hpp>
 #include <iostream>
+#include <CommandParseException.hpp>
+#include <Command.hpp>
 
 using namespace std;
 
@@ -19,22 +21,48 @@ public:
         if (args.at(0) == "help")
             ExitWithUsage();
         
-        for (auto it = args.begin(); it != args.end(); ++it) {
-            if (*it == "new_image") {
-                ParseNewImage(++it);
+        for (int i = 0; i < args.size(); ++i) {
+            if (args[i] == "new_image") {
+                ParseNewImage(args, ++i);
             }
             
-            if (*it == "load_image") {
-                ParseLoadImage(++it);
+            if (args[i] == "load_image") {
+                ParseLoadImage(args, ++i);
             }
         }
     }
     
-    static void ParseNewImage(vector<string>::iterator& inputStreamIt) {
+    static Command* ParseNewImage(vector<string>& inputTokens, uint64_t inputPosition) {
+        auto fileName = inputTokens[inputPosition];
+        auto sizeQualifier = inputTokens[inputPosition + 1];
+        auto sizeValue = inputTokens[inputPosition + 2];
     
+        uint64_t sizeParsed = 0;
+        try {
+            sizeParsed = std::stoll(sizeValue);
+        }catch (std::invalid_argument& e){
+            throw CommandParseException(inputPosition, inputTokens[inputPosition], "Parse error");
+        }
+        
+        uint64_t sizeInBytes = 0;
+        if(sizeQualifier == "-sb")
+            sizeInBytes = sizeParsed;
+        else if (sizeQualifier == "-sk")
+            sizeInBytes = sizeParsed * 1024UL;
+        else if (sizeQualifier == "-sm")
+            sizeInBytes = sizeParsed * 1024UL * 1024UL;
+        else if (sizeQualifier == "-sg")
+            sizeInBytes = sizeParsed * 1024UL * 1024UL * 1024UL;
+        else if (sizeQualifier == "-ss")
+            sizeInBytes = sizeParsed * 512;
+        else
+            throw CommandParseException(inputPosition, inputTokens[inputPosition], "Illegal size qualifier");
+    
+        return new NewImageCommand(fileName, sizeInBytes);
+        
     }
     
-    static void ParseLoadImage(vector<string>::iterator& inputStreamIt) {
+    static void ParseLoadImage(vector<string>& inputTokens, uint64_t inputPosition) {
     
     }
     

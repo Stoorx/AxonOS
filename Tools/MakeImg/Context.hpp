@@ -8,5 +8,5 @@
 
 class Context {
 public:
-    DiskImage DiskImage;
+    DiskImage* DiskImage = nullptr;
 };

@@ -10,13 +10,34 @@
 
 class DiskImage {
 public:
-    DiskImage(std::string fileName){
-        file = std::fstream();
-    }
+    explicit DiskImage(const std::string& fileName);
     
-    void operator[](uint64_t index){
+    virtual ~DiskImage();
     
-    }
+    DiskImage(DiskImage&& other) noexcept;
+    
+    static DiskImage CreateEmptyDiskImage(const std::string& fileName, uint64_t fileSize);
+    
+    void writeByte(int64_t index, uint8_t value);
+    
+    uint8_t readByte(int64_t index);
+    
+    
+    void writeShort(int64_t index, uint16_t value);
+    
+    uint16_t readShort(int64_t index);
+    
+    void writeInt(int64_t index, uint32_t value);
+    
+    uint32_t readInt(int64_t index);
+    
+    void writeLong(int64_t index, uint64_t value);
+    
+    uint64_t readLong(int64_t index);
+    
+    void writeBuffer(int64_t index, const char* buffer, uint64_t bufSize);
+    
+    void readBuffer(int64_t index, char* buffer, uint64_t bufSize);
 
 protected:
     std::fstream file;
