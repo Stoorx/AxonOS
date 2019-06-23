@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <MakeImg.hpp>
-#include <ExitProcessException.hpp>
+#include <Exceptions/ExitProcessException.hpp>
 
 int main(int argc, char** argv){
     std::vector<std::string> arguments;
@@ -17,6 +17,10 @@ int main(int argc, char** argv){
     }
     catch (ExitProcessException& e){
         return e.ExitCode;
+    }
+    catch (std::exception& e){
+        std::cerr << std::string("Uncatched exception: ") + e.what();
+        return -1;
     }
     return 0;
 }

@@ -9,7 +9,8 @@ DiskImage::DiskImage(const std::string& fileName) {
 }
 
 DiskImage::~DiskImage() {
-    file.close();
+    if (file.is_open())
+        file.close();
 }
 
 DiskImage DiskImage::CreateEmptyDiskImage(const std::string& fileName, uint64_t fileSize) {
@@ -79,4 +80,9 @@ void DiskImage::readBuffer(int64_t index, char* buffer, uint64_t bufSize) {
 
 DiskImage::DiskImage(DiskImage&& other) noexcept {
     this->file = std::move(other.file);
+}
+
+void DiskImage::close() {
+    if (file.is_open())
+        file.close();
 }

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <DiskImage.hpp>
+#include <Model/DiskImage.hpp>
 
 class Context {
 public:

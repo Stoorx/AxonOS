@@ -38,6 +38,7 @@ public:
     void writeBuffer(int64_t index, const char* buffer, uint64_t bufSize);
     
     void readBuffer(int64_t index, char* buffer, uint64_t bufSize);
+    void close();
 
 protected:
     std::fstream file;

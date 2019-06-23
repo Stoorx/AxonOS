@@ -4,6 +4,6 @@
 
 #pragma once
 
-#include <ExitProcessException.hpp>
+#include <Exceptions/ExitProcessException.hpp>
 
 void ExitProcess(int exitCode);
