@@ -5,8 +5,9 @@
 #pragma once
 
 #include <Model/DiskImage.hpp>
+#include <memory>
 
 class Context {
 public:
-    DiskImage* DiskImage = nullptr;
+    std::shared_ptr<DiskImage> DiskImage = nullptr;
 };

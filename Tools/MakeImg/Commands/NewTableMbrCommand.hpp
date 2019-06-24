@@ -5,8 +5,8 @@
 #pragma once
 
 #include "Command.hpp"
-#include <filesystem>
 #include <Exceptions/FileNotFoundException.hpp>
+#include <fstream>
 
 class NewTableMbrCommand : public Command {
 public:
@@ -19,7 +19,7 @@ public:
     }
     
     void Execute(Context& context) override {
-        if(std::filesystem::exists(MbrFileName)){
+        if(std::ifstream(MbrFileName)){ // if file exists
             // TODO: logic
         }else{
             throw FileNotFoundException(MbrFileName);

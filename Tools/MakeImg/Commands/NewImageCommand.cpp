@@ -10,5 +10,5 @@ void NewImageCommand::Execute(Context& context) {
     if (context.DiskImage != nullptr) {
         throw IllegalStateException("Attempt of creating new image while active image exists");
     }
-    context.DiskImage = new DiskImage(DiskImage::CreateEmptyDiskImage(FileName, FileSize));
+    context.DiskImage = std::make_shared<DiskImage>(DiskImage::CreateEmptyDiskImage(FileName, FileSize));
 }
