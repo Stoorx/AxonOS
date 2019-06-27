@@ -5,7 +5,7 @@
 #include "DiskImage.hpp"
 
 DiskImage::DiskImage(const std::string& fileName) {
-    file.open(fileName, std::fstream::binary | std::fstream::in | std::fstream::out);
+    file.open(fileName, std::fstream::binary | std::fstream::out);
 }
 
 DiskImage::~DiskImage() {
