@@ -4,8 +4,11 @@
 
 #include "DiskImage.hpp"
 
-DiskImage::DiskImage(const std::string& fileName) {
-    file.open(fileName, std::fstream::binary | std::fstream::out);
+DiskImage::DiskImage(const std::string& fileName, bool truncate) {
+    auto flags =  std::fstream::binary | std::fstream::out;
+    if(truncate)
+        flags |= std::fstream::trunc;
+    file.open(fileName, flags);
 }
 
 DiskImage::~DiskImage() {
@@ -14,7 +17,7 @@ DiskImage::~DiskImage() {
 }
 
 DiskImage DiskImage::CreateEmptyDiskImage(const std::string& fileName, uint64_t fileSize) {
-    auto di = DiskImage(fileName);
+    auto di = DiskImage(fileName, true);
     di.writeByte(fileSize - 1, 0);
     return di;
 }

@@ -10,7 +10,7 @@
 
 class DiskImage {
 public:
-    explicit DiskImage(const std::string& fileName);
+    explicit DiskImage(const std::string& fileName, bool truncate = false);
     
     virtual ~DiskImage();
     

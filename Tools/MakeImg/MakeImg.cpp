@@ -119,7 +119,7 @@ void MakeImg::Main(vector<string>& args) {
     try {
         CommandSequence commandSequence;
         
-        for (uint64_t i = 0; i < args.size(); ++i) {
+        for (uint64_t i = 0; i < args.size();) {
             if (args[i] == "new_image") {
                 commandSequence.Append(ParseNewImage(args, ++i));
             }
@@ -128,6 +128,8 @@ void MakeImg::Main(vector<string>& args) {
             }
             else if (args[i] == "new_table") {
                 commandSequence.Append(ParseNewTable(args, ++i));
+            }else {
+                throw CommandParseException(i, args[i], "Unknown command");
             }
         }
         

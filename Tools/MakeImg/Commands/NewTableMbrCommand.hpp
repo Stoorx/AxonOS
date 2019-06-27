@@ -6,6 +6,8 @@
 
 #include "Command.hpp"
 #include <Exceptions/FileNotFoundException.hpp>
+#include <Model/DiskImage.hpp>
+#include <Model/Context.hpp>
 #include <fstream>
 
 class NewTableMbrCommand : public Command {
@@ -14,17 +16,9 @@ public:
     
     }
     
-    explicit NewTableMbrCommand(const std::string& mbrFileName) :
-        UseDefaultBootloader(false), MbrFileName(mbrFileName) {
-    }
+    explicit NewTableMbrCommand(const std::string& mbrFileName);
     
-    void Execute(Context& context) override {
-        if(std::ifstream(MbrFileName)){ // if file exists
-            // TODO: logic
-        }else{
-            throw FileNotFoundException(MbrFileName);
-        }
-    }
+    void Execute(Context& context) override;
     
     const bool        UseDefaultBootloader;
     const std::string MbrFileName;
