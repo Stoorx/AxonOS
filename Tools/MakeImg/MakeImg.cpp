@@ -16,7 +16,7 @@ void MakeImg::ExitWithUsage() {
          "    makeimg [new_image file_name -[sb|sk|sm|sg|ss] size]\n"
          "            [load_image img_file_name]\n"
          "            [new_table [mbr|gpt] -b mbr_file]\n"
-         "            [new_part partition_number -fs fs_type -b begin -e end [-p parameters]]\n"
+         "            [new_part partition_number -b begin -e end [-p* parameters]]\n"
          "Commands:\n"
          "    help - show this help\n"
          "    new_image - create new image file of given size\n"
@@ -31,10 +31,9 @@ void MakeImg::ExitWithUsage() {
          "       gpt - GPT style\n"
          "       -b - load bootsector code from given file (for mbr partition table only)\n"
          "    new_part - create new partition\n"
-         "       -fs - set the type of filesystem (code or name)\n"
          "       -b - begin sector of the partition\n"
          "       -e - end sector of the partition\n"
-         "       -fs* - parameters for FS formatting tool\n";
+         "       -p* - parameters for FS formatting tool\n";
     
     ExitProcess(0);
 }
