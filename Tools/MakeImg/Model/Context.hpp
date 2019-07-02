@@ -6,11 +6,11 @@
 
 #include <Model/DiskImage.hpp>
 #include <memory>
-#include <Model/PartitionTable.hpp>
 
+class PartitionTableManager;
 
 class Context {
 public:
-    std::shared_ptr<DiskImage>      DiskImage      = nullptr;
-    std::shared_ptr<PartitionTable> PartitionTable = nullptr;
+    std::shared_ptr<DiskImage>             DiskImage        = nullptr;
+    std::shared_ptr<PartitionTableManager> PartitionManager = nullptr;
 };

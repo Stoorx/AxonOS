@@ -3,6 +3,7 @@
 //
 
 #include "NewTableMbrCommand.hpp"
+#include <Model/PartitionTableManager.hpp>
 #include <memory.h>
 
 NewTableMbrCommand::NewTableMbrCommand(const std::string& mbrFileName) :
@@ -12,7 +13,9 @@ NewTableMbrCommand::NewTableMbrCommand(const std::string& mbrFileName) :
 void NewTableMbrCommand::Execute(Context& context) {
     char mbr[512];
     if (UseDefaultBootloader) {
-        memset(mbr, 0, 512);
+        memset(mbr, 0, 510);
+        mbr[510] = 0x55;
+        mbr[511] = 0xAA;
     }
     else {
         auto mbrFile = std::ifstream(MbrFileName);
@@ -24,5 +27,5 @@ void NewTableMbrCommand::Execute(Context& context) {
         }
     }
     context.DiskImage->writeBuffer(0, mbr, 512);
-    context.PartitionType = PartitionTableType::MBR;
+    context.PartitionManager = std::shared_ptr<PartitionTableManager>(new MbrPartitionTableManager());
 }
