@@ -11,21 +11,11 @@ NewTableMbrCommand::NewTableMbrCommand(const std::string& mbrFileName) :
 }
 
 void NewTableMbrCommand::Execute(Context& context) {
-    char mbr[512];
-    if (UseDefaultBootloader) {
-        memset(mbr, 0, 510);
-        mbr[510] = 0x55;
-        mbr[511] = 0xAA;
-    }
-    else {
-        auto mbrFile = std::ifstream(MbrFileName);
-        if (mbrFile.is_open()) { // if file exists
-            mbrFile.read(mbr, 512);
-        }
-        else {
-            throw FileNotFoundException(MbrFileName);
-        }
-    }
-    context.DiskImage->writeBuffer(0, mbr, 512);
     context.PartitionManager = std::shared_ptr<PartitionTableManager>(new MbrPartitionTableManager());
+    
+    auto params = MbrCreatePartitionTableParameters();
+    params.BootsectorFileName   = MbrFileName;
+    params.UseDefaultBootloader = UseDefaultBootloader;
+    
+    context.PartitionManager->CreatePartitionTable(context, params);
 }

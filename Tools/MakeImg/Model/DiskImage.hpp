@@ -39,9 +39,11 @@ public:
     
     void readBuffer(int64_t index, char* buffer, uint64_t bufSize);
     void close();
-
+    
+    uint64_t getSize() const;
 protected:
-    std::fstream file;
+    std::fstream File;
+    uint64_t     Size;
 };
 
 

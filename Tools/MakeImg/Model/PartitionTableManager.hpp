@@ -8,6 +8,8 @@
 #include "Context.hpp"
 #include <Exceptions/IllegalStateException.hpp>
 #include <Model/DiskImage.hpp>
+#include <memory.h>
+#include <Exceptions/FileNotFoundException.hpp>
 
 enum class PartitionTableType {
     NotSet,
@@ -35,6 +37,17 @@ public:
     uint32_t EndLBA;
 };
 
+class CreatePartitionTableParameters {
+public:
+    virtual ~CreatePartitionTableParameters() = default;
+};
+
+class MbrCreatePartitionTableParameters : public CreatePartitionTableParameters {
+public:
+    std::string BootsectorFileName;
+    bool        UseDefaultBootloader;
+};
+
 struct MbrPartitionEntry {
     static const uint32_t FirstEntryOffset     = 0x1BE;
     static const uint8_t  ActivePartitionFlag  = 0x80;
@@ -57,13 +70,12 @@ public:
     const PartitionTableType PartitionType = PartitionTableType::NotSet;
     
     virtual void RegisterPartition(
-        Context& context,
-        uint32_t number,
-        const RegisterPartitionParameters& parameters
+        Context& context, uint32_t number, const RegisterPartitionParameters& parameters
     ) = 0;
     
-    virtual void CreatePartitionTable() = 0; // TODO: Add parameters
+    virtual void CreatePartitionTable(Context& context, const CreatePartitionTableParameters& parameters) = 0;
     
+    virtual bool DetectPartitionTable(const Context& context) = 0;
 };
 
 class MbrPartitionTableManager : public PartitionTableManager {
@@ -71,33 +83,9 @@ public:
     MbrPartitionTableManager() = default;
     MbrPartitionTableManager(MbrPartitionTableManager&& tm) = default;
     
-    void CreatePartitionTable() override { // TODO: Add parameters
-        PartitionTableManager::CreatePartitionTable(); // TODO: OVERRIDE
-    }
+    bool DetectPartitionTable(const Context& context) override;
     
-    void RegisterPartition(Context& context, uint32_t number, const RegisterPartitionParameters& parameters) override {
-        auto params = dynamic_cast<const MbrPartitionParameters*>(&parameters);
-        if (params != nullptr) {
-            char mbr[512];
-            context.DiskImage->readBuffer(0, mbr, 512);
-            auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + number;
+    void CreatePartitionTable(Context& context, const CreatePartitionTableParameters& parameters) override;
     
-            partitionEntry->Active =
-                (params->Active) ? MbrPartitionEntry::ActivePartitionFlag : MbrPartitionEntry::PassivePartitionFlag;
-            partitionEntry->StartHead               = params->StartHead;
-            partitionEntry->StartSectorCylinderHigh = params->StartSectorCylinderHigh;
-            partitionEntry->StartCylinderLow        = params->StartCylinderLow;
-            partitionEntry->PartitionType           = params->PartitionType;
-            partitionEntry->EndHead                 = params->EndHead;
-            partitionEntry->EndSectorCylinderHigh   = params->EndSectorCylinderHigh;
-            partitionEntry->EndCylinderLow          = params->EndCylinderLow;
-            partitionEntry->StartLBA                = params->StartLBA;
-            partitionEntry->EndLBA                  = params->EndLBA;
-    
-            context.DiskImage->writeBuffer(0, mbr, 512);
-        }
-        else {
-            throw IllegalStateException("Bad cast");
-        }
-    }
+    void RegisterPartition(Context& context, uint32_t number, const RegisterPartitionParameters& parameters) override;
 };
