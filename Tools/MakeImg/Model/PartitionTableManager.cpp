@@ -10,7 +10,7 @@ void MbrPartitionTableManager::CreatePartitionTable(
 ) {
     auto params = dynamic_cast<const MbrCreatePartitionTableParameters*>(&parameters);
     if (params != nullptr) {
-        char mbr[512];
+        uint8_t mbr[512];
         if (params->UseDefaultBootloader) {
             memset(mbr, 0, 510);
             mbr[510] = 0x55;
@@ -19,7 +19,7 @@ void MbrPartitionTableManager::CreatePartitionTable(
         else {
             auto mbrFile = std::ifstream(params->BootsectorFileName);
             if (mbrFile.is_open()) { // if file exists
-                mbrFile.read(mbr, 512);
+                mbrFile.read((char*)mbr, 512);
             }
             else {
                 throw FileNotFoundException(params->BootsectorFileName);
@@ -37,21 +37,21 @@ void MbrPartitionTableManager::RegisterPartition(
 ) {
     auto params = dynamic_cast<const MbrPartitionParameters*>(&parameters);
     if (params != nullptr) {
-        char mbr[512];
+        uint8_t mbr[512];
         context.DiskImage->readBuffer(0, mbr, 512);
         auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + number;
         
         partitionEntry->Active =
             (params->Active) ? MbrPartitionEntry::ActivePartitionFlag : MbrPartitionEntry::PassivePartitionFlag;
-        partitionEntry->StartHead = params->StartHead;
+        partitionEntry->StartHead               = params->StartHead;
         partitionEntry->StartSectorCylinderHigh = params->StartSectorCylinderHigh;
-        partitionEntry->StartCylinderLow = params->StartCylinderLow;
-        partitionEntry->PartitionType = params->PartitionType;
-        partitionEntry->EndHead = params->EndHead;
-        partitionEntry->EndSectorCylinderHigh = params->EndSectorCylinderHigh;
-        partitionEntry->EndCylinderLow = params->EndCylinderLow;
-        partitionEntry->StartLBA = params->StartLBA;
-        partitionEntry->EndLBA = params->EndLBA;
+        partitionEntry->StartCylinderLow        = params->StartCylinderLow;
+        partitionEntry->PartitionType           = params->PartitionType;
+        partitionEntry->EndHead                 = params->EndHead;
+        partitionEntry->EndSectorCylinderHigh   = params->EndSectorCylinderHigh;
+        partitionEntry->EndCylinderLow          = params->EndCylinderLow;
+        partitionEntry->StartLBA                = params->StartLBA;
+        partitionEntry->EndLBA                  = params->EndLBA;
         
         context.DiskImage->writeBuffer(0, mbr, 512);
     }
@@ -59,5 +59,7 @@ void MbrPartitionTableManager::RegisterPartition(
 }
 
 bool MbrPartitionTableManager::DetectPartitionTable(const Context& context) {
-    return false; // TODO: logic
+    uint8_t mbr[512];
+    context.DiskImage->readBuffer(0, mbr, 512);
+    return mbr[510] == 0x55 && mbr[511] == 0xAA;
 }

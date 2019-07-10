@@ -23,10 +23,9 @@ public:
     static void Main(vector<string>& args);
     
     static shared_ptr<Command> ParseNewImage(const vector<string>& inputTokens, uint64_t& inputPosition);
-    
     static shared_ptr<Command> ParseLoadImage(const vector<string>& inputTokens, uint64_t& inputPosition);
-    
     static shared_ptr<Command> ParseNewTable(const vector<string>& inputTokens, uint64_t& inputPosition);
+    static shared_ptr<Command> ParseNewPart(const vector<string>& inputTokens, uint64_t& inputPosition);
     
     static void ExitWithUsage();
     

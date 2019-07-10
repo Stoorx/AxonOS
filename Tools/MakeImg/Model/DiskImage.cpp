@@ -96,7 +96,7 @@ uint64_t DiskImage::readLong(int64_t index) {
     return value;
 }
 
-void DiskImage::writeBuffer(int64_t index, const char* buffer, uint64_t bufSize) {
+void DiskImage::writeBuffer(int64_t index, const uint8_t* buffer, uint64_t bufSize) {
     if (index >= Size) {
         throw IndexOutOfBoundsException(index, Size);
     }
@@ -104,7 +104,7 @@ void DiskImage::writeBuffer(int64_t index, const char* buffer, uint64_t bufSize)
     File.write(buffer, bufSize);
 }
 
-void DiskImage::readBuffer(int64_t index, char* buffer, uint64_t bufSize) {
+void DiskImage::readBuffer(int64_t index, uint8_t* buffer, uint64_t bufSize) {
     if (index >= Size) {
         throw IndexOutOfBoundsException(index, Size);
     }

@@ -35,9 +35,9 @@ public:
     
     uint64_t readLong(int64_t index);
     
-    void writeBuffer(int64_t index, const char* buffer, uint64_t bufSize);
+    void writeBuffer(int64_t index, const uint8_t* buffer, uint64_t bufSize);
     
-    void readBuffer(int64_t index, char* buffer, uint64_t bufSize);
+    void readBuffer(int64_t index, uint8_t* buffer, uint64_t bufSize);
     void close();
     
     uint64_t getSize() const;

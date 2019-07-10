@@ -16,7 +16,8 @@ void MakeImg::ExitWithUsage() {
          "    makeimg [new_image file_name -[sb|sk|sm|sg|ss] size]\n"
          "            [load_image img_file_name]\n"
          "            [new_table [mbr|gpt] -b mbr_file]\n"
-         "            [new_part partition_number -b begin -e end [-p* parameters]]\n"
+         "            [new_part partition_number -b begin -e end -f flags]"
+         "            [new_fs fs_type -n part_number -p_* params]\n"
          "Commands:\n"
          "    help - show this help\n"
          "    new_image - create new image file of given size\n"
@@ -33,7 +34,10 @@ void MakeImg::ExitWithUsage() {
          "    new_part - create new partition\n"
          "       -b - begin sector of the partition\n"
          "       -e - end sector of the partition\n"
-         "       -p* - parameters for FS formatting tool\n";
+         "       -f - partition flags"
+         "    new_fs - create new filesystem\n"
+         "       -n - partition number\n"
+         "       -p_* - parameters for file system tool\n";
     
     ExitProcess(0);
 }
@@ -110,6 +114,21 @@ shared_ptr<Command> MakeImg::ParseNewTable(const vector<string>& inputTokens, ui
     }
 }
 
+shared_ptr<Command> MakeImg::ParseNewPart(const vector<string>& inputTokens, uint64_t& inputPosition) {
+    auto number = inputTokens[inputPosition];
+    
+    uint64_t numberParsed = 0;
+    try {
+        numberParsed = std::stoll(number);
+    }
+    catch (std::invalid_argument& e) {
+        throw CommandParseException(inputPosition + 2, inputTokens[inputPosition + 2], "Invalid number");
+    }
+    
+    // TODO: logic
+    return nullptr;
+}
+
 void MakeImg::Main(vector<string>& args) {
     if (args.empty())
         ExitProcess(1);
@@ -127,7 +146,11 @@ void MakeImg::Main(vector<string>& args) {
             }
             else if (args[i] == "new_table") {
                 commandSequence.Append(ParseNewTable(args, ++i));
-            }else {
+            }
+            else if (args[i] == "new_part") {
+                commandSequence.Append(ParseNewPart(args, ++i));
+            }
+            else {
                 throw CommandParseException(i, args[i], "Unknown command");
             }
         }
