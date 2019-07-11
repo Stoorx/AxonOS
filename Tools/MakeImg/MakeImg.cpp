@@ -131,7 +131,7 @@ shared_ptr<Command> MakeImg::ParseNewPart(const vector<string>& inputTokens, uin
     set<string> flags;
     
     for (uint8_t i = 0;; ++i) {
-        auto currentToken = inputTokens[inputPosition + i];
+        auto currentToken = i < inputTokens.size() ? inputTokens[inputPosition + i] : "";
         if (currentToken == "-b") {
             ++i;
             try {
@@ -161,6 +161,7 @@ shared_ptr<Command> MakeImg::ParseNewPart(const vector<string>& inputTokens, uin
         }
         else {
             // if current token is the next command
+            inputPosition += i;
             return shared_ptr<Command>(
                 new NewPartCommand(
                     partNumber,
