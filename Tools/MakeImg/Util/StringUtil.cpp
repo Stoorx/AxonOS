@@ -15,5 +15,6 @@ std::vector<std::string> StringUtil::Split(const std::string& str, char delimite
             startPosition = currentPosition;
         }
     }
+    resultVector.emplace_back(str, startPosition, str.size());
     return resultVector;
 }

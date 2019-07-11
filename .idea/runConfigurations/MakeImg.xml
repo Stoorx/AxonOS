@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="MakeImg" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="new_image axon.img -sm 64 new_table mbr -b Dist\Boot\MBR.bin new_part 1 -b 2048 -e 131071 -f active" PASS_PARENT_ENVS_2="true" PROJECT_NAME="AxonOS" TARGET_NAME="MakeImg" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="AxonOS" RUN_TARGET_NAME="MakeImg">
+  <configuration default="false" name="MakeImg" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="new_image axon.img -sm 64 new_table mbr -b MBR.bin new_part 1 -b 2048 -e 131071 -f active" PASS_PARENT_ENVS_2="true" PROJECT_NAME="AxonOS" TARGET_NAME="MakeImg" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="AxonOS" RUN_TARGET_NAME="MakeImg">
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
     </method>

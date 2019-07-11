@@ -130,8 +130,8 @@ shared_ptr<Command> MakeImg::ParseNewPart(const vector<string>& inputTokens, uin
     uint64_t    partEnd   = -1;
     set<string> flags;
     
-    for (uint8_t i = 0;; ++i) {
-        auto currentToken = i < inputTokens.size() ? inputTokens[inputPosition + i] : "";
+    for (uint8_t i = 1;; ++i) {
+        auto currentToken = inputPosition + i < inputTokens.size() ? inputTokens[inputPosition + i] : "";
         if (currentToken == "-b") {
             ++i;
             try {

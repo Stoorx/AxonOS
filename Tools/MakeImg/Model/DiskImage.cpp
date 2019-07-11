@@ -6,8 +6,8 @@
 #include <Exceptions/IndexOutOfBoundsException.hpp>
 
 DiskImage::DiskImage(const std::string& fileName, bool truncate) {
-    auto flags =  std::fstream::binary | std::fstream::out;
-    if(truncate)
+    auto flags = std::fstream::binary | std::fstream::out | std::fstream::in;
+    if (truncate)
         flags |= std::fstream::trunc;
     File.open(fileName, flags);
 }
@@ -18,9 +18,15 @@ DiskImage::~DiskImage() {
 }
 
 DiskImage DiskImage::CreateEmptyDiskImage(const std::string& fileName, uint64_t fileSize) {
-    auto di = DiskImage(fileName, true);
+    // Create file
+    std::ofstream fs(fileName, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc);
+    fs.seekp(fileSize - 1);
+    fs << 0;
+    fs.flush();
+    fs.close();
+    
+    auto di = DiskImage(fileName);
     di.Size = fileSize;
-    di.writeByte(fileSize - 1, 0);
     return di;
 }
 
