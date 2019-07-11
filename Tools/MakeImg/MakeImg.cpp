@@ -2,6 +2,7 @@
 // Created by Stoorx on 19.06.2019.
 //
 
+
 #include "MakeImg.hpp"
 
 void MakeImg::ExitWithError(const string& message, int exitCode) {
@@ -34,7 +35,7 @@ void MakeImg::ExitWithUsage() {
          "    new_part - create new partition\n"
          "       -b - begin sector of the partition\n"
          "       -e - end sector of the partition\n"
-         "       -f - partition flags"
+         "       -f - partition flags\n"
          "    new_fs - create new filesystem\n"
          "       -n - partition number\n"
          "       -p_* - parameters for file system tool\n";
@@ -117,16 +118,59 @@ shared_ptr<Command> MakeImg::ParseNewTable(const vector<string>& inputTokens, ui
 shared_ptr<Command> MakeImg::ParseNewPart(const vector<string>& inputTokens, uint64_t& inputPosition) {
     auto number = inputTokens[inputPosition];
     
-    uint64_t numberParsed = 0;
+    uint64_t partNumber = 0;
     try {
-        numberParsed = std::stoll(number);
+        partNumber = std::stoll(number);
     }
     catch (std::invalid_argument& e) {
         throw CommandParseException(inputPosition + 2, inputTokens[inputPosition + 2], "Invalid number");
     }
     
-    // TODO: logic
-    return nullptr;
+    uint64_t    partBegin = -1;
+    uint64_t    partEnd   = -1;
+    set<string> flags;
+    
+    for (uint8_t i = 0;; ++i) {
+        auto currentToken = inputTokens[inputPosition + i];
+        if (currentToken == "-b") {
+            ++i;
+            try {
+                partBegin = std::stoll(inputTokens[inputPosition + i]);
+            }
+            catch (std::invalid_argument& e) {
+                throw CommandParseException(inputPosition + i, inputTokens[inputPosition + i], "Invalid number");
+            }
+        }
+        else if (currentToken == "-e") {
+            ++i;
+            try {
+                partEnd = std::stoll(inputTokens[inputPosition + i]);
+            }
+            catch (std::invalid_argument& e) {
+                throw CommandParseException(inputPosition + i, inputTokens[inputPosition + i], "Invalid number");
+            }
+        }
+        else if (currentToken == "-f") {
+            ++i;
+            auto flagsStr    = inputTokens[inputPosition + i];
+            auto flagsVector = StringUtil::Split(flagsStr, ',');
+            flags = set(flagsVector.begin(), flagsVector.end());
+        }
+        else if (currentToken[0] == '-') {
+            throw CommandParseException(inputPosition + i, currentToken, "Unknown parameter");
+        }
+        else {
+            // if current token is the next command
+            return shared_ptr<Command>(
+                new NewPartCommand(
+                    partNumber,
+                    partBegin,
+                    partEnd,
+                    flags
+                )
+            );
+        }
+    }
 }
 
 void MakeImg::Main(vector<string>& args) {

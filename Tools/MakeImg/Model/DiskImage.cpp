@@ -101,7 +101,7 @@ void DiskImage::writeBuffer(int64_t index, const uint8_t* buffer, uint64_t bufSi
         throw IndexOutOfBoundsException(index, Size);
     }
     File.seekp(index);
-    File.write(buffer, bufSize);
+    File.write((const char*)buffer, bufSize);
 }
 
 void DiskImage::readBuffer(int64_t index, uint8_t* buffer, uint64_t bufSize) {
@@ -109,8 +109,7 @@ void DiskImage::readBuffer(int64_t index, uint8_t* buffer, uint64_t bufSize) {
         throw IndexOutOfBoundsException(index, Size);
     }
     File.seekg(index);
-    uint16_t value;
-    File.read(buffer, bufSize);
+    File.read((char*)buffer, bufSize);
 }
 
 DiskImage::DiskImage(DiskImage&& other) noexcept {

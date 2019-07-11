@@ -35,7 +35,7 @@ void MbrPartitionTableManager::RegisterPartition(
     uint32_t number,
     const RegisterPartitionParameters& parameters
 ) {
-    auto params = dynamic_cast<const MbrPartitionParameters*>(&parameters);
+    auto params = dynamic_cast<const MbrRegisterPartitionParameters*>(&parameters);
     if (params != nullptr) {
         uint8_t mbr[512];
         context.DiskImage->readBuffer(0, mbr, 512);
@@ -62,4 +62,8 @@ bool MbrPartitionTableManager::DetectPartitionTable(const Context& context) {
     uint8_t mbr[512];
     context.DiskImage->readBuffer(0, mbr, 512);
     return mbr[510] == 0x55 && mbr[511] == 0xAA;
+}
+
+PartitionTableType MbrPartitionTableManager::GetPartitionTableType() const {
+    return PartitionTableType::MBR;
 }

@@ -23,7 +23,7 @@ public:
     virtual ~RegisterPartitionParameters() = default;
 };
 
-class MbrPartitionParameters : public RegisterPartitionParameters {
+class MbrRegisterPartitionParameters : public RegisterPartitionParameters { // TODO: Add builder
 public:
     bool     Active;
     uint8_t  StartHead;
@@ -76,6 +76,8 @@ public:
     virtual void CreatePartitionTable(Context& context, const CreatePartitionTableParameters& parameters) = 0;
     
     virtual bool DetectPartitionTable(const Context& context) = 0;
+    
+    virtual PartitionTableType GetPartitionTableType() const = 0;
 };
 
 class MbrPartitionTableManager : public PartitionTableManager {
@@ -84,7 +86,7 @@ public:
     MbrPartitionTableManager(MbrPartitionTableManager&& tm) = default;
     
     bool DetectPartitionTable(const Context& context) override;
-    
+    PartitionTableType GetPartitionTableType() const override;
     void CreatePartitionTable(Context& context, const CreatePartitionTableParameters& parameters) override;
     
     void RegisterPartition(Context& context, uint32_t number, const RegisterPartitionParameters& parameters) override;

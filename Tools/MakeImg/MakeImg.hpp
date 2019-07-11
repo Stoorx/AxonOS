@@ -14,6 +14,8 @@
 #include <Commands/LoadImageCommand.hpp>
 #include <Commands/NewTableMbrCommand.hpp>
 #include <Model/CommandSequence.hpp>
+#include <Commands/NewPartCommand.hpp>
+#include <Util/StringUtil.hpp>
 #include <memory>
 
 using namespace std;
