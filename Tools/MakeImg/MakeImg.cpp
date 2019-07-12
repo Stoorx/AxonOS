@@ -174,6 +174,10 @@ shared_ptr<Command> MakeImg::ParseNewPart(const vector<string>& inputTokens, uin
     }
 }
 
+shared_ptr<Command> MakeImg::ParseNewFs(const vector<string>& inputTokens, uint64_t& inputPosition) {
+    return nullptr; // TODO: Add command parsing
+}
+
 void MakeImg::Main(vector<string>& args) {
     if (args.empty())
         ExitProcess(1);
@@ -195,6 +199,9 @@ void MakeImg::Main(vector<string>& args) {
             else if (args[i] == "new_part") {
                 commandSequence.Append(ParseNewPart(args, ++i));
             }
+            else if (args[i] == "new_fs") {
+                commandSequence.Append(ParseNewFs(args, ++i));
+            }
             else {
                 throw CommandParseException(i, args[i], "Unknown command");
             }
@@ -207,5 +214,7 @@ void MakeImg::Main(vector<string>& args) {
         ExitWithError(e.what(), -1);
     }
 }
+
+
 
 
