@@ -67,3 +67,19 @@ bool MbrPartitionTableManager::DetectPartitionTable(const Context& context) {
 PartitionTableType MbrPartitionTableManager::GetPartitionTableType() const {
     return PartitionTableType::MBR;
 }
+
+uint64_t MbrPartitionTableManager::GetPartitionOffset(const Context& context, uint32_t partitionNumber) const {
+    uint8_t mbr[512];
+    context.DiskImage->readBuffer(0, mbr, 512);
+    auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + partitionNumber;
+    return partitionEntry->StartLBA;
+}
+
+uint64_t MbrPartitionTableManager::GetPartitionSize(const Context& context, uint32_t partitionNumber) const {
+    uint8_t mbr[512];
+    context.DiskImage->readBuffer(0, mbr, 512);
+    auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + partitionNumber;
+    return partitionEntry->EndLBA - partitionEntry->StartLBA + 1;
+}
+//TODO: Refactor: make a cache for partitions entries to avoid reading from the disk
+//TODO: Refactor: think about adding the Context in the manager as a field

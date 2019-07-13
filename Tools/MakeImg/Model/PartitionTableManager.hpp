@@ -78,6 +78,8 @@ public:
     virtual bool DetectPartitionTable(const Context& context) = 0;
     
     virtual PartitionTableType GetPartitionTableType() const = 0;
+    virtual uint64_t GetPartitionOffset(const Context& context, uint32_t partitionNumber) const = 0;
+    virtual uint64_t GetPartitionSize(const Context& context, uint32_t partitionNumber) const = 0;
 };
 
 class MbrPartitionTableManager : public PartitionTableManager {
@@ -90,4 +92,6 @@ public:
     void CreatePartitionTable(Context& context, const CreatePartitionTableParameters& parameters) override;
     
     void RegisterPartition(Context& context, uint32_t number, const RegisterPartitionParameters& parameters) override;
+    uint64_t GetPartitionOffset(const Context& context, uint32_t partitionNumber) const override;
+    uint64_t GetPartitionSize(const Context& context, uint32_t partitionNumber) const override;
 };
