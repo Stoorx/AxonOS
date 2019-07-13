@@ -5,8 +5,9 @@
 #pragma once
 
 #include <Model/FsManager.hpp>
-#include "Fat32FatCache.hpp"
 #include <Model/PartitionTableManager.hpp>
+#include "Fat32FatCache.hpp"
+
 
 #pragma pack(push, 1)
 struct Fat32BiosParametersBlock {
@@ -44,51 +45,23 @@ struct Fat32BiosParametersBlock {
 
 class Fat32FsManager : public FsManager {
 public:
-    explicit Fat32FsManager(Context& context, uint32_t partitionNumber) :
-        PartitionNumber(partitionNumber),
-        FatHeaderCache(),
-        PartitionOffset(context.PartitionManager->GetPartitionOffset(context, partitionNumber)),
-        PartitionSize(context.PartitionManager->GetPartitionSize(context, partitionNumber)) {
-        
-    }
+    explicit Fat32FsManager(Context& context, uint32_t partitionNumber);
     
-    bool CheckFsSupport(const std::string& fsName) override {
-        auto fsNameLowercase = fsName;
-        std::transform(
-            fsName.begin(),
-            fsName.end(),
-            fsNameLowercase.begin(),
-            [](char c) {
-                return std::tolower(c);
-            }
-        );
-        return fsNameLowercase == "fat32";
-    }
+    bool CheckFsSupport(const std::string& fsName) override;
     
     void FormatPartition(
         Context& context,
         uint32_t number,
         const FsFormatPartitionParameters& params
-    ) override {
-        // TODO: initialize FatCache
-    }
+    ) override;
     
-    uint64_t GetFatFirstSector() const {
-        return FatHeaderCache.ReservedSectorsCount + FatHeaderCache.HiddenSectorsCount;
-    }
+    uint64_t GetFatFirstSector() const;
     
-    uint64_t GetFatOffset() const {
-        return GetFatFirstSector() * FatHeaderCache.BytesPerSector;
-    }
+    uint64_t GetFatOffset() const;
     
-    uint64_t GetFirstDataSector() const {
-        return GetFatFirstSector() + FatHeaderCache.NumberOfFats * FatHeaderCache.TableSize_32;
-    }
+    uint64_t GetFirstDataSector() const;
     
-    uint64_t GetFirstSectorOfCluster(uint32_t clusterNumber) {
-        //FirstSectorofCluster = DataStartSector + (N - 2) * BPB_SecPerClus;
-        return GetFirstDataSector() + (clusterNumber - 2) * FatHeaderCache.SectorsPerCluster;
-    }
+    uint64_t GetFirstSectorOfCluster(uint32_t clusterNumber);
 
 protected:
     Fat32BiosParametersBlock       FatHeaderCache; // TODO: Make a new type for Header parameters
