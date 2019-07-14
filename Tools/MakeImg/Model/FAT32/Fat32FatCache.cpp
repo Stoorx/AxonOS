@@ -5,8 +5,7 @@
 #include "Fat32FatCache.hpp"
 #include "Fat32FsManager.hpp"
 
-Fat32FatCache::Fat32FatCache(Context& context, Fat32FsManager& fsManager, uint32_t cacheSize) :
-    CurrentContext(context),
+Fat32FatCache::Fat32FatCache(Fat32FsManager& fsManager, uint32_t cacheSize) :
     FsManager(fsManager),
     CurrentImageOffset(0),
     Cache(cacheSize, 0),

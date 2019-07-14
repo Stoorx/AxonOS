@@ -7,6 +7,7 @@
 #include "Util/Math.hpp"
 
 Fat32FsManager::Fat32FsManager(Context& context, uint32_t partitionNumber) :
+    FsManager(context),
     PartitionNumber(partitionNumber),
     FatHeaderCache(),
     PartitionOffset(context.PartitionManager->GetPartitionOffset(context, partitionNumber)),
@@ -53,7 +54,20 @@ uint64_t Fat32FsManager::GetFirstSectorOfCluster(uint32_t clusterNumber) {
  */
 
 Fat32FsFormatPartitionParameters::Fat32FsFormatPartitionParameters() {
-
+    this->setOemName("ImgT19.1")
+        .setBytesPerSector(512)
+        .setSectorsPerCluster(8)
+        .setReservedSectorsCount(2048)
+        .setNumberOfFats(2)
+        .setMediaType(0xF8)
+        .setHiddenSectorsCount(0)
+        .setExtendedFlags(0)
+        .setRootDirectoryCluster(2)
+        .setFsInfoSector(2)
+        .setBackupBootsectorSector(6)
+        .setDriveNumber(0x80)
+        .setVolumeLabel("")
+        .setFilesystemName("FAT32   ");
 }
 
 using FormatParams = Fat32FsFormatPartitionParameters;

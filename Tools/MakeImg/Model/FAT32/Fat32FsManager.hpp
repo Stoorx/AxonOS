@@ -107,6 +107,5 @@ protected:
     uint8_t     DriveNumber; // Maybe parameter. Usually it is 0x80
     std::string VolumeLabel; // Parameter/ 11 characters
     std::string FilesystemName;// Parameter/ 8 characters/ Default: FAT32
-    
 };
 
