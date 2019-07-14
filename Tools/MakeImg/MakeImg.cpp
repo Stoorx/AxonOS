@@ -208,10 +208,7 @@ shared_ptr<Command> MakeImg::ParseNewFs(const vector<string>& inputTokens, uint6
                     inputTokens[inputPosition - 1],
                     "Partition number parameter not found"
                 );
-            
-            return shared_ptr<Command>(
-                new NewFsCommand(fsType, partNumber, fsParameters)
-            );
+            return NewFsCommand::CreateFsCommandByType(fsType, partNumber, fsParameters);
         }
     }
 }

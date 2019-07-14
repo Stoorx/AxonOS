@@ -47,13 +47,9 @@ class Fat32FsManager : public FsManager {
 public:
     explicit Fat32FsManager(Context& context, uint32_t partitionNumber);
     
-    bool CheckFsSupport(const std::string& fsName) override;
+    static bool CheckFsSupport(const std::string& fsName);
     
-    void FormatPartition(
-        Context& context,
-        uint32_t number,
-        const FsFormatPartitionParameters& params
-    ) override;
+    void FormatPartition(const FsFormatPartitionParameters& params) override;
     
     uint64_t GetFatFirstSector() const;
     
@@ -82,14 +78,13 @@ public:
     Fat32FsFormatPartitionParameters& setReservedSectorsCount(uint16_t reservedSectorsCount);
     Fat32FsFormatPartitionParameters& setNumberOfFats(uint8_t numberOfFats);
     Fat32FsFormatPartitionParameters& setMediaType(uint8_t mediaType);
-    Fat32FsFormatPartitionParameters& setHiddenSectorsCount(uint32_t hiddenSectorsCount);
     Fat32FsFormatPartitionParameters& setExtendedFlags(uint16_t extendedFlags);
     Fat32FsFormatPartitionParameters& setRootDirectoryCluster(uint32_t rootDirectoryCluster);
     Fat32FsFormatPartitionParameters& setFsInfoSector(uint16_t fsInfoSector);
     Fat32FsFormatPartitionParameters& setBackupBootsectorSector(uint16_t backupBootsectorSector);
     Fat32FsFormatPartitionParameters& setDriveNumber(uint8_t driveNumber);
     Fat32FsFormatPartitionParameters& setVolumeLabel(const std::string& volumeLabel);
-    Fat32FsFormatPartitionParameters& setFilesystemName(const std::string& filesystemName);
+    Fat32FsFormatPartitionParameters& setBootsectorFileName(const std::string& bootsectorFileName);
 protected:
     std::string OemName; // Check the string is not longer than 8 characters
     // BPB 1
@@ -98,7 +93,6 @@ protected:
     uint16_t    ReservedSectorsCount; // Parameter
     uint8_t     NumberOfFats; // Parameter
     uint8_t     MediaType; // Replace by enum
-    uint32_t    HiddenSectorsCount; // Take from PartitionManager TODO: add GetPartitionInfo to PartitionManager
     // BPB 2
     uint16_t    ExtendedFlags; // WTF? TODO: Find docs http://elm-chan.org/docs/fat_e.html
     uint32_t    RootDirectoryCluster; // Maybe parameter. Often it is 2
@@ -107,5 +101,6 @@ protected:
     uint8_t     DriveNumber; // Maybe parameter. Usually it is 0x80
     std::string VolumeLabel; // Parameter/ 11 characters
     std::string FilesystemName;// Parameter/ 8 characters/ Default: FAT32
+    std::string BootsectorFileName;
 };
 

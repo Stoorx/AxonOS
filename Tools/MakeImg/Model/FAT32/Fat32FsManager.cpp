@@ -28,8 +28,9 @@ bool Fat32FsManager::CheckFsSupport(const std::string& fsName) {
     return fsNameLowercase == "fat32";
 }
 
-void Fat32FsManager::FormatPartition(Context& context, uint32_t number, const FsFormatPartitionParameters& params) {
-    // TODO: initialize FatCache
+void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) {
+    // TODO: add formatting
+    // TODO: don't forget to initialize FatCache
 }
 
 uint64_t Fat32FsManager::GetFatFirstSector() const {
@@ -60,14 +61,14 @@ Fat32FsFormatPartitionParameters::Fat32FsFormatPartitionParameters() {
         .setReservedSectorsCount(2048)
         .setNumberOfFats(2)
         .setMediaType(0xF8)
-        .setHiddenSectorsCount(0)
         .setExtendedFlags(0)
         .setRootDirectoryCluster(2)
         .setFsInfoSector(2)
         .setBackupBootsectorSector(6)
         .setDriveNumber(0x80)
-        .setVolumeLabel("")
-        .setFilesystemName("FAT32   ");
+        .setVolumeLabel("");
+    
+    this->FilesystemName = "FAT32   ";
 }
 
 using FormatParams = Fat32FsFormatPartitionParameters;
@@ -148,11 +149,6 @@ FormatParams& Fat32FsFormatPartitionParameters::setMediaType(uint8_t mediaType) 
     return *this;
 }
 
-FormatParams& Fat32FsFormatPartitionParameters::setHiddenSectorsCount(uint32_t hiddenSectorsCount) {
-    this->HiddenSectorsCount = hiddenSectorsCount;
-    
-    return *this;
-}
 
 FormatParams& Fat32FsFormatPartitionParameters::setExtendedFlags(uint16_t extendedFlags) {
     this->ExtendedFlags = extendedFlags;
@@ -199,18 +195,8 @@ FormatParams& Fat32FsFormatPartitionParameters::setVolumeLabel(const std::string
     return *this;
 }
 
-FormatParams& Fat32FsFormatPartitionParameters::setFilesystemName(const std::string& filesystemName) {
-    if (filesystemName.size() > 8) {
-        throw IncorrectParameterException(
-            "FilesystemName", filesystemName,
-            "FilesystemName can not be longer than 8 characters"
-        );
-    }
-    this->FilesystemName = filesystemName;
-    while (this->FilesystemName.size() < 8) {
-        this->FilesystemName.append(" ");
-    }
-    
+FormatParams& Fat32FsFormatPartitionParameters::setBootsectorFileName(const std::string& bootsectorFileName) {
+    this->BootsectorFileName = bootsectorFileName;
     return *this;
 }
 

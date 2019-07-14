@@ -6,6 +6,7 @@
 
 #include <Commands/Command.hpp>
 #include <map>
+#include <Model/FAT32/Fat32FsManager.hpp>
 
 class NewFsCommand : public Command {
 public:
@@ -15,9 +16,11 @@ public:
         const std::map<std::string, std::string>& params
     ) : FsType(fsType), PartitionNumber(partitionNumber), Params(params) {}
     
-    void Execute(Context& context) override {
-        // TODO: Add logic
-    }
+    static std::shared_ptr<Command> CreateFsCommandByType(
+        const std::string& fsType,
+        uint32_t partitionNumber,
+        const std::map<std::string, std::string>& params
+    );
 
 protected:
     const std::string                        FsType;
@@ -26,3 +29,13 @@ protected:
 };
 
 
+class NewFat32FsCommand : public NewFsCommand {
+public:
+    NewFat32FsCommand(
+        const std::string& fsType,
+        const uint32_t partitionNumber,
+        const std::map<std::string, std::string>& params
+    ) : NewFsCommand(fsType, partitionNumber, params) {}
+    
+    void Execute(Context& context) override;
+};
