@@ -3,6 +3,7 @@
 //
 
 
+#include <Commands/NewFsCommand.hpp>
 #include "MakeImg.hpp"
 
 void MakeImg::ExitWithError(const string& message, int exitCode) {
@@ -175,7 +176,44 @@ shared_ptr<Command> MakeImg::ParseNewPart(const vector<string>& inputTokens, uin
 }
 
 shared_ptr<Command> MakeImg::ParseNewFs(const vector<string>& inputTokens, uint64_t& inputPosition) {
-    return nullptr; // TODO: Add command parsing
+    std::string                        fsType     = inputTokens[inputPosition];
+    uint32_t                           partNumber = -1;
+    std::map<std::string, std::string> fsParameters;
+    
+    for (uint8_t i = 1;; ++i) {
+        std::string
+            currentToken = inputPosition + i < inputTokens.size() ? inputTokens[inputPosition + i] : std::string("");
+        if (currentToken == "-n") {
+            ++i;
+            try {
+                partNumber = std::stoll(inputTokens[inputPosition + i]);
+            }
+            catch (std::invalid_argument& e) {
+                throw CommandParseException(inputPosition + i, inputTokens[inputPosition + i], "Invalid number");
+            }
+        }
+        else if (currentToken.rfind("-p_", 0) == 0) {
+            ++i;
+            fsParameters.insert({currentToken, inputTokens[inputPosition + i + 1]});
+        }
+        else if (currentToken[0] == '-') {
+            throw CommandParseException(inputPosition + i, currentToken, "Unknown parameter");
+        }
+        else {
+            // if current token is the next command
+            inputPosition += i;
+            if (partNumber == -1)
+                throw CommandParseException(
+                    inputPosition - 1,
+                    inputTokens[inputPosition - 1],
+                    "Partition number parameter not found"
+                );
+            
+            return shared_ptr<Command>(
+                new NewFsCommand(fsType, partNumber, fsParameters)
+            );
+        }
+    }
 }
 
 void MakeImg::Main(vector<string>& args) {

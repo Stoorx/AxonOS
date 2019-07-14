@@ -11,16 +11,18 @@ class NewFsCommand : public Command {
 public:
     NewFsCommand(
         const std::string& fsType,
+        const uint32_t partitionNumber,
         const std::map<std::string, std::string>& params
-    ) : FsType(fsType), Params(params) {}
+    ) : FsType(fsType), PartitionNumber(partitionNumber), Params(params) {}
     
     void Execute(Context& context) override {
         // TODO: Add logic
     }
 
 protected:
-    std::string                        FsType;
-    std::map<std::string, std::string> Params;
+    const std::string                        FsType;
+    const uint32_t                           PartitionNumber;
+    const std::map<std::string, std::string> Params;
 };
 
 
