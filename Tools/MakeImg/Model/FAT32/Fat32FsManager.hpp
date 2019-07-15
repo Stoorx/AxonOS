@@ -69,7 +69,7 @@ protected:
 
 class Fat32FsFormatPartitionParameters : public FsFormatPartitionParameters {
 public:
-    Fat32FsFormatPartitionParameters(); // TODO: Make a default constructor
+    Fat32FsFormatPartitionParameters();
     //TODO: Make an extended constructor
     
     Fat32FsFormatPartitionParameters& setOemName(const std::string& oemName);
@@ -85,6 +85,21 @@ public:
     Fat32FsFormatPartitionParameters& setDriveNumber(uint8_t driveNumber);
     Fat32FsFormatPartitionParameters& setVolumeLabel(const std::string& volumeLabel);
     Fat32FsFormatPartitionParameters& setBootsectorFileName(const std::string& bootsectorFileName);
+    
+    const std::string& getOemName() const;
+    uint64_t getBytesPerSector() const;
+    uint8_t getSectorsPerCluster() const;
+    uint16_t getReservedSectorsCount() const;
+    uint8_t getNumberOfFats() const;
+    uint8_t getMediaType() const;
+    uint16_t getExtendedFlags() const;
+    uint32_t getRootDirectoryCluster() const;
+    uint16_t getFsInfoSector() const;
+    uint16_t getBackupBootsectorSector() const;
+    uint8_t getDriveNumber() const;
+    const std::string& getVolumeLabel() const;
+    const std::string& getFilesystemName() const;
+    const std::string& getBootsectorFileName() const;
 protected:
     std::string OemName; // Check the string is not longer than 8 characters
     // BPB 1

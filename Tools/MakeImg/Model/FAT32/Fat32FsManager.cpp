@@ -67,7 +67,6 @@ Fat32FsFormatPartitionParameters::Fat32FsFormatPartitionParameters() {
         .setBackupBootsectorSector(6)
         .setDriveNumber(0x80)
         .setVolumeLabel("");
-    
     this->FilesystemName = "FAT32   ";
 }
 
@@ -198,5 +197,61 @@ FormatParams& Fat32FsFormatPartitionParameters::setVolumeLabel(const std::string
 FormatParams& Fat32FsFormatPartitionParameters::setBootsectorFileName(const std::string& bootsectorFileName) {
     this->BootsectorFileName = bootsectorFileName;
     return *this;
+}
+
+const std::string& Fat32FsFormatPartitionParameters::getOemName() const {
+    return OemName;
+}
+
+uint64_t Fat32FsFormatPartitionParameters::getBytesPerSector() const {
+    return BytesPerSector;
+}
+
+uint8_t Fat32FsFormatPartitionParameters::getSectorsPerCluster() const {
+    return SectorsPerCluster;
+}
+
+uint16_t Fat32FsFormatPartitionParameters::getReservedSectorsCount() const {
+    return ReservedSectorsCount;
+}
+
+uint8_t Fat32FsFormatPartitionParameters::getNumberOfFats() const {
+    return NumberOfFats;
+}
+
+uint8_t Fat32FsFormatPartitionParameters::getMediaType() const {
+    return MediaType;
+}
+
+uint16_t Fat32FsFormatPartitionParameters::getExtendedFlags() const {
+    return ExtendedFlags;
+}
+
+uint32_t Fat32FsFormatPartitionParameters::getRootDirectoryCluster() const {
+    return RootDirectoryCluster;
+}
+
+uint16_t Fat32FsFormatPartitionParameters::getFsInfoSector() const {
+    return FsInfoSector;
+}
+
+uint16_t Fat32FsFormatPartitionParameters::getBackupBootsectorSector() const {
+    return BackupBootsectorSector;
+}
+
+uint8_t Fat32FsFormatPartitionParameters::getDriveNumber() const {
+    return DriveNumber;
+}
+
+const std::string& Fat32FsFormatPartitionParameters::getVolumeLabel() const {
+    return VolumeLabel;
+}
+
+const std::string& Fat32FsFormatPartitionParameters::getFilesystemName() const {
+    return FilesystemName;
+}
+
+const std::string& Fat32FsFormatPartitionParameters::getBootsectorFileName() const {
+    return BootsectorFileName;
 }
 
