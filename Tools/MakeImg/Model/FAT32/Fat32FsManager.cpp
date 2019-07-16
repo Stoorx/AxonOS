@@ -2,6 +2,7 @@
 // Created by Stoorx on 12.07.2019.
 //
 
+#include <time.h>
 #include "Fat32FsManager.hpp"
 #include "Exceptions/IncorrectParameterException.hpp"
 #include "Util/Math.hpp"
@@ -29,8 +30,48 @@ bool Fat32FsManager::CheckFsSupport(const std::string& fsName) {
 }
 
 void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) {
-    // TODO: add formatting
-    // TODO: don't forget to initialize FatCache
+    auto partParams = dynamic_cast<const Fat32FsFormatPartitionParameters*>(&params);
+    if (partParams != nullptr) {
+        auto partOffset = this->ImageContext.PartitionManager->GetPartitionOffset(ImageContext, this->PartitionNumber);
+        auto partSize   = this->ImageContext.PartitionManager->GetPartitionSize(ImageContext, this->PartitionNumber);
+        
+        Fat32BiosParametersBlock bpb = {};
+        memcpy(bpb.OemName, partParams->getOemName().c_str(), 8);
+        bpb.BytesPerSector       = partParams->getBytesPerSector();
+        bpb.SectorsPerCluster    = partParams->getSectorsPerCluster();
+        bpb.ReservedSectorsCount = partParams->getReservedSectorsCount();
+        bpb.NumberOfFats         = partParams->getNumberOfFats();
+        bpb.RootEntriesCount     = 0;
+        bpb.TotalSectors16       = 0;
+        bpb.MediaType            = partParams->getMediaType();
+        bpb.TableSize_16         = 0;
+        bpb.SectorsPerTrack      = 0;
+        bpb.HeadSideCount        = 0;
+        bpb.HiddenSectorsCount   = partOffset;
+        bpb.TotalSectors_32      = partSize;
+        auto fill          = 0;
+        auto clustersCount = ((bpb.TotalSectors_32 - bpb.ReservedSectorsCount) * bpb.BytesPerSector -
+                              4 * bpb.NumberOfFats * (2 - fill)) /
+                             (
+                                 4 * bpb.NumberOfFats + bpb.SectorsPerCluster * bpb.BytesPerSector
+                             ); // FIXME!!!: does not work
+        bpb.TableSize_32; // TODO!!!: determine table size
+        bpb.ExtendedFlags          = partParams->getExtendedFlags(); // TODO: initialization
+        bpb.FatVersion             = 0;
+        bpb.RootDirectoryCluster   = partParams->getRootDirectoryCluster();
+        bpb.FsInfoSector           = partParams->getFsInfoSector();
+        bpb.BackupBootsectorSector = partParams->getBackupBootsectorSector();
+        bpb.DriveNumber            = partParams->getDriveNumber();
+        bpb.reserved_1             = 0;
+        bpb.ExtendedBootSignature  = 0x29;
+        bpb.VolumeSerialNumber     = time(nullptr); //TODO: Make better SN algorithm;
+        memcpy(bpb.VolumeLabel, partParams->getVolumeLabel().c_str(), 11);
+        memcpy(bpb.FilesystemName, partParams->getFilesystemName().c_str(), 8);
+        //TODO: Add FSInfo initialization
+        //TODO: Add FAT table formatting
+        //TODO: Write all on disk
+        // TODO: don't forget to initialize FatCache
+    }
 }
 
 uint64_t Fat32FsManager::GetFatFirstSector() const {
