@@ -17,6 +17,11 @@ enum class PartitionTableType {
     MBR,
     GPT
 };
+enum class PartitionType {
+    Unallocated,
+    Invalid,
+    Fat32Lba
+};
 
 class RegisterPartitionParameters {
 public:
@@ -67,8 +72,6 @@ struct MbrPartitionEntry {
 
 class PartitionTableManager {
 public:
-    const PartitionTableType PartitionType = PartitionTableType::NotSet;
-    
     virtual void RegisterPartition(
         Context& context, uint32_t number, const RegisterPartitionParameters& parameters
     ) = 0;
@@ -80,6 +83,7 @@ public:
     virtual PartitionTableType GetPartitionTableType() const = 0;
     virtual uint64_t GetPartitionOffset(const Context& context, uint32_t partitionNumber) const = 0;
     virtual uint64_t GetPartitionSize(const Context& context, uint32_t partitionNumber) const = 0;
+    virtual void setPartitionType(Context& context, uint32_t partitionNumber, PartitionType partitionType) = 0;
 };
 
 class MbrPartitionTableManager : public PartitionTableManager {
@@ -94,4 +98,7 @@ public:
     void RegisterPartition(Context& context, uint32_t number, const RegisterPartitionParameters& parameters) override;
     uint64_t GetPartitionOffset(const Context& context, uint32_t partitionNumber) const override;
     uint64_t GetPartitionSize(const Context& context, uint32_t partitionNumber) const override;
+    void setPartitionType(Context& context, uint32_t partitionNumber, PartitionType partitionType) override;
+protected:
+    static std::map<PartitionType, uint8_t> PartitionTypeMapping;
 };

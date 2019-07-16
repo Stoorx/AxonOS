@@ -3,6 +3,13 @@
 //
 
 #include "PartitionTableManager.hpp"
+#include <Exceptions/IncorrectParameterException.hpp>
+
+std::map<PartitionType, uint8_t> MbrPartitionTableManager::PartitionTypeMapping = {
+    {PartitionType::Unallocated, 0x00},
+    {PartitionType::Invalid, 0xFF},
+    {PartitionType::Fat32Lba, 0x0C}
+};
 
 void MbrPartitionTableManager::CreatePartitionTable(
     Context& context,
@@ -80,6 +87,29 @@ uint64_t MbrPartitionTableManager::GetPartitionSize(const Context& context, uint
     context.DiskImage->readBuffer(0, mbr, 512);
     auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + partitionNumber;
     return partitionEntry->EndLBA - partitionEntry->StartLBA + 1;
+}
+
+void MbrPartitionTableManager::setPartitionType(
+    Context& context,
+    uint32_t partitionNumber,
+    PartitionType partitionType
+) {
+    uint8_t mbr[512];
+    context.DiskImage->readBuffer(0, mbr, 512);
+    auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + partitionNumber;
+    
+    auto mappingIt = PartitionTypeMapping.find(partitionType);
+    if (mappingIt != PartitionTypeMapping.end()) {
+        partitionEntry->PartitionType = mappingIt->second;
+        context.DiskImage->writeBuffer(0, mbr, 512);
+    }
+    else {
+        throw IncorrectParameterException(
+            "Partition type",
+            std::to_string((uint32_t)partitionType),
+            "Unsupported partition type"
+        );
+    }
 }
 //TODO: Refactor: make a cache for partitions entries to avoid reading from the disk
 //TODO: Refactor: think about adding the Context in the manager as a field
