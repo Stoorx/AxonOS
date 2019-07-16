@@ -49,13 +49,15 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
         bpb.HeadSideCount        = 0;
         bpb.HiddenSectorsCount   = partOffset;
         bpb.TotalSectors_32      = partSize;
-        auto fill          = 0;
-        auto clustersCount = ((bpb.TotalSectors_32 - bpb.ReservedSectorsCount) * bpb.BytesPerSector -
-                              4 * bpb.NumberOfFats * (2 - fill)) /
-                             (
-                                 4 * bpb.NumberOfFats + bpb.SectorsPerCluster * bpb.BytesPerSector
-                             ); // FIXME!!!: does not work
-        bpb.TableSize_32; // TODO!!!: determine table size
+        bpb.TableSize_32         = calculateFatTableSize(
+            bpb.TotalSectors_32,
+            bpb.SectorsPerCluster,
+            bpb.ReservedSectorsCount,
+            bpb.NumberOfFats
+        );
+        
+        auto clustersCount = (bpb.TotalSectors_32 - bpb.ReservedSectorsCount - bpb.NumberOfFats * bpb.TableSize_32)
+                             / bpb.SectorsPerCluster;
         bpb.ExtendedFlags          = partParams->getExtendedFlags(); // TODO: initialization
         bpb.FatVersion             = 0;
         bpb.RootDirectoryCluster   = partParams->getRootDirectoryCluster();
@@ -64,13 +66,13 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
         bpb.DriveNumber            = partParams->getDriveNumber();
         bpb.reserved_1             = 0;
         bpb.ExtendedBootSignature  = 0x29;
-        bpb.VolumeSerialNumber     = time(nullptr); //TODO: Make better SN algorithm;
+        bpb.VolumeSerialNumber     = time(nullptr); // TODO: Make better SN algorithm;
         memcpy(bpb.VolumeLabel, partParams->getVolumeLabel().c_str(), 11);
         memcpy(bpb.FilesystemName, partParams->getFilesystemName().c_str(), 8);
         //TODO: Add FSInfo initialization
         //TODO: Add FAT table formatting
         //TODO: Write all on disk
-        // TODO: don't forget to initialize FatCache
+        //TODO: don't forget to initialize FatCache
     }
 }
 
@@ -89,6 +91,18 @@ uint64_t Fat32FsManager::GetFirstDataSector() const {
 uint64_t Fat32FsManager::GetFirstSectorOfCluster(uint32_t clusterNumber) {
     //FirstSectorofCluster = DataStartSector + (N - 2) * BPB_SecPerClus;
     return GetFirstDataSector() + (clusterNumber - 2) * FatHeaderCache.SectorsPerCluster;
+}
+
+uint32_t Fat32FsManager::calculateFatTableSize(
+    uint32_t totalSectors,
+    uint8_t sectorsPerCluster,
+    uint16_t reservedSectors,
+    uint8_t numberOfFats
+) const {
+    auto tmpVal1 = totalSectors - reservedSectors;
+    auto tmpVal2 = (256 * sectorsPerCluster) + numberOfFats;
+    tmpVal2 /= 2;
+    return (tmpVal1 + (tmpVal2 - 1)) / tmpVal2;
 }
 
 /*
@@ -295,4 +309,3 @@ const std::string& Fat32FsFormatPartitionParameters::getFilesystemName() const {
 const std::string& Fat32FsFormatPartitionParameters::getBootsectorFileName() const {
     return BootsectorFileName;
 }
-

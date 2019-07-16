@@ -65,6 +65,13 @@ protected:
     uint32_t                       PartitionNumber;
     uint64_t                       PartitionOffset;
     uint64_t                       PartitionSize;
+private:
+    uint32_t calculateFatTableSize(
+        uint32_t totalSectors,
+        uint8_t sectorsPerCluster,
+        uint16_t reservedSectors,
+        uint8_t numberOfFats
+    ) const;
 };
 
 class Fat32FsFormatPartitionParameters : public FsFormatPartitionParameters {
