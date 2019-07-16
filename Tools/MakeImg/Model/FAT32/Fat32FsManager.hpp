@@ -119,3 +119,29 @@ protected:
     std::string BootsectorFileName;
 };
 
+struct Fat32FsInfoBlock {
+public:
+    Fat32FsInfoBlock() :
+        LeadSig(0x4161'5252),
+        _reserved0(),
+        StructSig(0x6141'7272),
+        FreeCount(0xFFFF'FFFF),
+        NextFree(0xFFFF'FFFF),
+        _reserved1(),
+        TrailSig(0xAA55'0000) {
+        for (uint8_t& i : _reserved0) {
+            i = 0;
+        }
+        for (uint8_t& i : _reserved1) {
+            i = 0;
+        }
+    }
+    
+    uint32_t LeadSig; //0x41615252
+    uint8_t  _reserved0[480]; // should be zero
+    uint32_t StructSig; // 0x61417272
+    uint32_t FreeCount; // Indicates count of free clusters; if it is 0xFFFF'FFFF it is incorrect
+    uint32_t NextFree;
+    uint8_t  _reserved1[12]; // should be zero
+    uint32_t TrailSig; // 0xAA550000
+};
