@@ -88,6 +88,7 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
             vbr[510] = 0x55;
             vbr[511] = 0xAA;
         }
+        this->FatHeaderCache = bpb;
         memcpy(vbr + 3, (void*)&bpb, sizeof(bpb));
         ImageContext.DiskImage->writeBuffer(bpb.HiddenSectorsCount * 512, vbr, 512); // TODO: 512 IS BAD! REFACTOR LATER
         ImageContext.DiskImage->writeBuffer((bpb.HiddenSectorsCount + bpb.BackupBootsectorSector) * 512, vbr, 512);
@@ -100,9 +101,26 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
                                   (uint8_t*)&fsInfo,
                                   512
                     ); // TODO: 512 IS BAD! REFACTOR LATER
-        
-        //TODO: Add FAT table formatting
-        //TODO: Write all on disk
+    
+        uint32_t fat0Entry = 0x0FFF'FF00U | bpb.MediaType;
+        uint32_t fat1Entry = 0x0FFF'FFFF;
+    
+        for (uint8_t i = 0; i < FatHeaderCache.NumberOfFats; ++i) {
+            ImageContext.DiskImage
+                        ->writeInt(
+                            (this->GetFatFirstSector() + FatHeaderCache.TableSize_32 * i) *
+                            FatHeaderCache.BytesPerSector +
+                            sizeof(uint32_t) * 0, fat0Entry
+                        );
+            ImageContext.DiskImage
+                        ->writeInt(
+                            (this->GetFatFirstSector() + FatHeaderCache.TableSize_32 * i) *
+                            FatHeaderCache.BytesPerSector +
+                            sizeof(uint32_t) * 1, fat1Entry
+                        );
+        }
+    
+        // TODO: Initialize root directory
         //TODO: don't forget to initialize FatCache
     }
 }

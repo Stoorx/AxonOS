@@ -193,8 +193,8 @@ shared_ptr<Command> MakeImg::ParseNewFs(const vector<string>& inputTokens, uint6
             }
         }
         else if (currentToken.rfind("-p_", 0) == 0) {
-            ++i;
-            fsParameters.insert({currentToken, inputTokens[inputPosition + i + 1]});
+            fsParameters.insert(std::pair(currentToken, inputTokens[inputPosition + i + 1]));
+            i++;
         }
         else if (currentToken[0] == '-') {
             throw CommandParseException(inputPosition + i, currentToken, "Unknown parameter");
