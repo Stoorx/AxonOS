@@ -21,7 +21,8 @@ DiskImage DiskImage::CreateEmptyDiskImage(const std::string& fileName, uint64_t 
     // Create file
     std::ofstream fs(fileName, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc);
     fs.seekp(fileSize - 1);
-    fs << 0;
+    uint8_t zero = 0;
+    fs.write((char*)&zero, sizeof(zero));
     fs.flush();
     fs.close();
     
@@ -35,7 +36,7 @@ void DiskImage::writeByte(int64_t index, uint8_t value) {
         throw IndexOutOfBoundsException(index, Size);
     }
     File.seekp(index);
-    File << value;
+    File.write((char*)&value, sizeof(value));
 }
 
 uint8_t DiskImage::readByte(int64_t index) {
@@ -44,7 +45,7 @@ uint8_t DiskImage::readByte(int64_t index) {
     }
     File.seekg(index);
     uint8_t value;
-    File >> value;
+    File.read((char*)&value, sizeof(value));
     return value;
 }
 
@@ -53,7 +54,7 @@ void DiskImage::writeShort(int64_t index, uint16_t value) {
         throw IndexOutOfBoundsException(index, Size);
     }
     File.seekp(index);
-    File << value;
+    File.write((char*)&value, sizeof(value));
 }
 
 uint16_t DiskImage::readShort(int64_t index) {
@@ -62,7 +63,7 @@ uint16_t DiskImage::readShort(int64_t index) {
     }
     File.seekg(index);
     uint16_t value;
-    File >> value;
+    File.read((char*)&value, sizeof(value));
     return value;
 }
 
@@ -71,7 +72,7 @@ void DiskImage::writeInt(int64_t index, uint32_t value) {
         throw IndexOutOfBoundsException(index, Size);
     }
     File.seekp(index);
-    File << value;
+    File.write((char*)&value, sizeof(value));
 }
 
 void DiskImage::writeLong(int64_t index, uint64_t value) {
@@ -79,7 +80,7 @@ void DiskImage::writeLong(int64_t index, uint64_t value) {
         throw IndexOutOfBoundsException(index, Size);
     }
     File.seekp(index);
-    File << value;
+    File.write((char*)&value, sizeof(value));
 }
 
 uint32_t DiskImage::readInt(int64_t index) {
@@ -88,7 +89,7 @@ uint32_t DiskImage::readInt(int64_t index) {
     }
     File.seekg(index);
     uint32_t value;
-    File >> value;
+    File.read((char*)&value, sizeof(value));
     return value;
 }
 
@@ -98,7 +99,7 @@ uint64_t DiskImage::readLong(int64_t index) {
     }
     File.seekg(index);
     uint64_t value;
-    File >> value;
+    File.read((char*)&value, sizeof(value));
     return value;
 }
 

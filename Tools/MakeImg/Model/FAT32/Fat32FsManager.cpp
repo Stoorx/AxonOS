@@ -32,6 +32,7 @@ bool Fat32FsManager::CheckFsSupport(const std::string& fsName) {
 void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) {
     auto partParams = dynamic_cast<const Fat32FsFormatPartitionParameters*>(&params);
     if (partParams != nullptr) {
+        ImageContext.PartitionManager->setPartitionType(ImageContext, PartitionNumber, PartitionType::Fat32Lba);
         auto partOffset = this->ImageContext.PartitionManager->GetPartitionOffset(ImageContext, this->PartitionNumber);
         auto partSize   = this->ImageContext.PartitionManager->GetPartitionSize(ImageContext, this->PartitionNumber);
         
@@ -104,7 +105,8 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
     
         uint32_t fat0Entry = 0x0FFF'FF00U | bpb.MediaType;
         uint32_t fat1Entry = 0x0FFF'FFFF;
-    
+        uint32_t eoc       = 0x0FFF'FFF8;
+        
         for (uint8_t i = 0; i < FatHeaderCache.NumberOfFats; ++i) {
             ImageContext.DiskImage
                         ->writeInt(
@@ -118,10 +120,15 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
                             FatHeaderCache.BytesPerSector +
                             sizeof(uint32_t) * 1, fat1Entry
                         );
+            ImageContext.DiskImage
+                        ->writeInt(
+                            (this->GetFatFirstSector() + FatHeaderCache.TableSize_32 * i) *
+                            FatHeaderCache.BytesPerSector +
+                            sizeof(uint32_t) * 2, eoc
+                        );
         }
     
-        // TODO: Initialize root directory
-        //TODO: don't forget to initialize FatCache
+        //TODO: Initialize FAT cache
     }
 }
 
@@ -167,7 +174,7 @@ Fat32FsFormatPartitionParameters::Fat32FsFormatPartitionParameters() {
         .setMediaType(0xF8)
         .setExtendedFlags(0)
         .setRootDirectoryCluster(2)
-        .setFsInfoSector(2)
+        .setFsInfoSector(1)
         .setBackupBootsectorSector(6)
         .setDriveNumber(0x80)
         .setVolumeLabel("");

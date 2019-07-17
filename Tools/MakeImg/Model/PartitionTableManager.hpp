@@ -67,7 +67,7 @@ struct MbrPartitionEntry {
     uint8_t  EndSectorCylinderHigh;
     uint8_t  EndCylinderLow;
     uint32_t StartLBA;
-    uint32_t EndLBA;
+    uint32_t SizeLBA;
 };
 
 class PartitionTableManager {

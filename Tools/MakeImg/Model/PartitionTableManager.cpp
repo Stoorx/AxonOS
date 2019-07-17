@@ -58,7 +58,7 @@ void MbrPartitionTableManager::RegisterPartition(
         partitionEntry->EndSectorCylinderHigh   = params->EndSectorCylinderHigh;
         partitionEntry->EndCylinderLow          = params->EndCylinderLow;
         partitionEntry->StartLBA                = params->StartLBA;
-        partitionEntry->EndLBA                  = params->EndLBA;
+        partitionEntry->SizeLBA                 = params->EndLBA - params->StartLBA + 1;
         
         context.DiskImage->writeBuffer(0, mbr, 512);
     }
@@ -86,7 +86,7 @@ uint64_t MbrPartitionTableManager::GetPartitionSize(const Context& context, uint
     uint8_t mbr[512];
     context.DiskImage->readBuffer(0, mbr, 512);
     auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + partitionNumber;
-    return partitionEntry->EndLBA - partitionEntry->StartLBA + 1;
+    return partitionEntry->SizeLBA;
 }
 
 void MbrPartitionTableManager::setPartitionType(
