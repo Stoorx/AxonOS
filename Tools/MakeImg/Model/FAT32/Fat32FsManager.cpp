@@ -58,7 +58,7 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
         
         auto clustersCount = (bpb.TotalSectors_32 - bpb.ReservedSectorsCount - bpb.NumberOfFats * bpb.TableSize_32)
                              / bpb.SectorsPerCluster;
-        bpb.ExtendedFlags          = partParams->getExtendedFlags(); // TODO: initialization
+        bpb.ExtendedFlags          = partParams->getExtendedFlags();
         bpb.FatVersion             = 0;
         bpb.RootDirectoryCluster   = partParams->getRootDirectoryCluster();
         bpb.FsInfoSector           = partParams->getFsInfoSector();
@@ -69,7 +69,38 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
         bpb.VolumeSerialNumber     = time(nullptr); // TODO: Make better SN algorithm;
         memcpy(bpb.VolumeLabel, partParams->getVolumeLabel().c_str(), 11);
         memcpy(bpb.FilesystemName, partParams->getFilesystemName().c_str(), 8);
-        //TODO: Add FSInfo initialization
+    
+        uint8_t       vbr[512];
+        std::ifstream vbrFile;
+        if (!partParams->getBootsectorFileName().empty()) {
+            vbrFile.open(partParams->getBootsectorFileName(), std::ifstream::binary);
+            if (!vbrFile.good()) {
+                throw FileNotFoundException(partParams->getBootsectorFileName());
+            }
+            vbrFile.read((char*)vbr, 512);
+        }
+        else {
+            memset(vbr, 0, 512);
+            //add jump over BPB. Windows checks it.
+            vbr[0]   = 0xeb; // jmp short
+            vbr[1]   = 0x58; // [start]
+            vbr[2]   = 0x90; // nop
+            vbr[510] = 0x55;
+            vbr[511] = 0xAA;
+        }
+        memcpy(vbr + 3, (void*)&bpb, sizeof(bpb));
+        ImageContext.DiskImage->writeBuffer(bpb.HiddenSectorsCount * 512, vbr, 512); // TODO: 512 IS BAD! REFACTOR LATER
+        ImageContext.DiskImage->writeBuffer((bpb.HiddenSectorsCount + bpb.BackupBootsectorSector) * 512, vbr, 512);
+    
+        Fat32FsInfoBlock fsInfo;
+        fsInfo.NextFree  = 2;
+        fsInfo.FreeCount = clustersCount;
+        ImageContext.DiskImage
+                    ->writeBuffer((bpb.HiddenSectorsCount + bpb.FsInfoSector) * 512,
+                                  (uint8_t*)&fsInfo,
+                                  512
+                    ); // TODO: 512 IS BAD! REFACTOR LATER
+        
         //TODO: Add FAT table formatting
         //TODO: Write all on disk
         //TODO: don't forget to initialize FatCache
