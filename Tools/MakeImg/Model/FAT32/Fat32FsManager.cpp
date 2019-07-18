@@ -161,6 +161,18 @@ uint32_t Fat32FsManager::calculateFatTableSize(
     return (tmpVal1 + (tmpVal2 - 1)) / tmpVal2;
 }
 
+std::shared_ptr<File> Fat32FsManager::openFile(const std::string& path, OpenFileAttributes attributes) {
+    return std::shared_ptr<File>(); // TODO: implement
+}
+
+void Fat32FsManager::deleteFile(const std::string& path) {
+    // TODO: implement
+}
+
+std::shared_ptr<File> Fat32FsManager::createFile(const std::string& path, CreateFileAttributes attributes) {
+    return std::shared_ptr<File>(); // TODO: implement
+}
+
 /*
  * Fat32FsFormatPartitionParameters methods
  */

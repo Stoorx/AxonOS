@@ -59,6 +59,9 @@ public:
     uint64_t GetFirstDataSector() const;
     
     uint64_t GetFirstSectorOfCluster(uint32_t clusterNumber);
+    virtual std::shared_ptr<File> openFile(const std::string& path, OpenFileAttributes attributes) override;
+    virtual void deleteFile(const std::string& path) override;
+    virtual std::shared_ptr<File> createFile(const std::string& path, CreateFileAttributes attributes) override;
     
     Fat32FileDescriptor getFileDescriptor(const std::string& path); // TODO: implement
 protected:
