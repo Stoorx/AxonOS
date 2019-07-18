@@ -7,7 +7,8 @@
 #include <Model/FsManager.hpp>
 #include <Model/PartitionTableManager.hpp>
 #include "Fat32FatCache.hpp"
-
+#include "Fat32FileDescriptor.hpp"
+#include <Model/File.hpp>
 
 #pragma pack(push, 1)
 struct Fat32BiosParametersBlock {
@@ -58,7 +59,8 @@ public:
     uint64_t GetFirstDataSector() const;
     
     uint64_t GetFirstSectorOfCluster(uint32_t clusterNumber);
-
+    
+    Fat32FileDescriptor getFileDescriptor(const std::string& path); // TODO: implement
 protected:
     Fat32BiosParametersBlock       FatHeaderCache; // TODO: Make a new type for Header parameters
     std::unique_ptr<Fat32FatCache> FatCache = nullptr;

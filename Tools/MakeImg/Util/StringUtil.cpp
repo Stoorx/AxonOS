@@ -5,6 +5,7 @@
 #include "StringUtil.hpp"
 #include <stdexcept>
 #include <Exceptions/IncorrectParameterException.hpp>
+#include <algorithm>
 
 std::vector<std::string> StringUtil::Split(const std::string& str, char delimiter) {
     uint32_t                 startPosition   = 0;
@@ -30,4 +31,17 @@ uint64_t StringUtil::ToLong(const std::string& str) {
         throw IncorrectParameterException("Number parsing error", str, "Parameter must be a number");
     }
     return result;
+}
+
+std::string StringUtil::toUpperCase(const std::string& str) {
+    std::string uppercaseStr = str;
+    std::transform(
+        str.begin(),
+        str.end(),
+        uppercaseStr.begin(),
+        [](char c) {
+            return std::toupper(c);
+        }
+    );
+    return uppercaseStr;
 }
