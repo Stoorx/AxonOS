@@ -29,6 +29,7 @@ public:
     static shared_ptr<Command> ParseNewTable(const vector<string>& inputTokens, uint64_t& inputPosition);
     static shared_ptr<Command> ParseNewPart(const vector<string>& inputTokens, uint64_t& inputPosition);
     static shared_ptr<Command> ParseNewFs(const vector<string>& inputTokens, uint64_t& inputPosition);
+    static shared_ptr<Command> ParseCopyFile(const vector<string>& inputTokens, uint64_t& inputPosition);
     
     static void ExitWithUsage();
     

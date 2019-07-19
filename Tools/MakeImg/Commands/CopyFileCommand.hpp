@@ -16,7 +16,7 @@ enum class CopyFileAttributes {
 
 class CopyFileCommand : public Command {
 public:
-    CopyFileCommand(const std::string& from, const std::string& to, CopyFileAttributes attributes) :
+    CopyFileCommand(const std::string& from, const std::string& to, const std::vector<bool>& attributes) :
         From(from), To(to), CopyAttributes(attributes) {}
     
     void Execute(Context& context) override {
@@ -24,9 +24,9 @@ public:
     }
 
 protected:
-    const std::string  From;
-    const std::string  To;
-    CopyFileAttributes CopyAttributes;
+    const std::string       From;
+    const std::string       To;
+    const std::vector<bool> CopyAttributes;
 private:
 
 };

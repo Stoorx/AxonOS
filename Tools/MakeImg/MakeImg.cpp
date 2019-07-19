@@ -4,6 +4,7 @@
 
 
 #include <Commands/NewFsCommand.hpp>
+#include <Commands/CopyFileCommand.hpp>
 #include "MakeImg.hpp"
 
 void MakeImg::ExitWithError(const string& message, int exitCode) {
@@ -213,6 +214,55 @@ shared_ptr<Command> MakeImg::ParseNewFs(const vector<string>& inputTokens, uint6
     }
 }
 
+shared_ptr<Command> MakeImg::ParseCopyFile(const vector<string>& inputTokens, uint64_t& inputPosition) {
+    if ((inputTokens.size() - inputPosition) < 2) {
+        throw CommandParseException(
+            inputPosition - 1,
+            inputTokens[inputPosition - 1],
+            "There are not enough arguments; there are " +
+            std::to_string(inputTokens.size() - inputPosition) +
+            ", expected minimum 2"
+        );
+    }
+    std::string       from = inputTokens[inputPosition++];
+    std::string       to   = inputTokens[inputPosition++];
+    std::vector<bool> attributes(3, false);
+    
+    while (inputTokens.size() != inputPosition) {
+        std::string currentToken = inputTokens[inputPosition++];
+        if (currentToken[0] != '-') {
+            --inputPosition;
+            break;
+        }
+        else {
+            if (currentToken == "-r") {
+                attributes[static_cast<int>(CopyFileAttributes::Recursive)] = true;
+            }
+            else if (currentToken == "-f") {
+                attributes[static_cast<int>(CopyFileAttributes::Force)] = true;
+            }
+            else if (currentToken == "-pt") {
+                attributes[static_cast<int>(CopyFileAttributes::PreserveTimestamps)] = true;
+            }
+            else {
+                throw CommandParseException(
+                    inputPosition - 1,
+                    inputTokens[inputPosition - 1],
+                    "Unknown Copy File Attribute"
+                );
+            }
+        }
+    }
+    
+    return shared_ptr<Command>(
+        new CopyFileCommand(
+            from,
+            to,
+            attributes
+        )
+    );
+}
+
 void MakeImg::Main(vector<string>& args) {
     if (args.empty())
         ExitProcess(1);
@@ -236,6 +286,9 @@ void MakeImg::Main(vector<string>& args) {
             }
             else if (args[i] == "new_fs") {
                 commandSequence.Append(ParseNewFs(args, ++i));
+            }
+            else if (args[i] == "copy_file") {
+                commandSequence.Append(ParseCopyFile(args, ++i));
             }
             else {
                 throw CommandParseException(i, args[i], "Unknown command");
