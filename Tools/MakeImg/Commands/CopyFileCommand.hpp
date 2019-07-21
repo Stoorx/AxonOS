@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 #include <Exceptions/IncorrectParameterException.hpp>
 #include <dirent.h>
-#include <Model/FileManager.hpp>
 
 enum class CopyFileAttributes {
     Recursive,
@@ -19,34 +18,8 @@ enum class CopyFileAttributes {
 
 class CopyFileCommand : public Command {
 public:
-    CopyFileCommand(const std::string& from, const std::string& to, const std::vector<bool>& attributes) :
-        From(from), To(to), CopyAttributes(attributes) {}
-    
-    void Execute(Context& context) override {
-        struct stat fromPathStat = {};
-        stat(From.c_str(), &fromPathStat);
-        if (S_ISDIR(fromPathStat.st_mode)) {
-            if (!CopyAttributes[(uint32_t)CopyFileAttributes::Recursive])
-                throw IncorrectParameterException(
-                    "Recursive",
-                    "false",
-                    "Source is directory. Use -r for recursive copy"
-                );
-            else {
-                RecursiveWalk(
-                    From, [&](const std::string& currentFile) {
-                        std::string toPath = ""; //TODO: make a relatve path from currentFile path
-                        context.FileManager.copyFile(currentFile, toPath, CopyAttributes);
-                    }
-                );
-            }
-        }
-        else {
-            // if it is file
-            std::string toPath = ""; //TODO: make a relatve path from currentFile path
-            context.FileManager.copyFile(From, toPath, CopyAttributes);
-        }
-    }
+    CopyFileCommand(const std::string& from, const std::string& to, const std::vector<bool>& attributes);
+    void Execute(Context& context) override;
 
 protected:
     const std::string       From;
@@ -68,6 +41,18 @@ private:
             }
             closedir(dir);
         }
+    }
+    
+    static std::string CreateRelativePath(const std::string& to, const std::string& from, const std::string& current) {
+        std::string add    = current.substr(from.size() + 2);
+        std::string result = (to[0] == '/' ? "" : "/") + to + add;
+        for (auto& c : result) {
+            if (c == '\\') {
+                c = '/';
+            }
+        }
+        
+        return result;
     }
 };
 

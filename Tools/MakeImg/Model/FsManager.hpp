@@ -24,7 +24,8 @@ enum class CreateFileAttributes {
     Directory,
     Hidden,
     System,
-    Truncate
+    Truncate,
+    File //TODO: Delete this and Fix dependent methods with std::vector<bool>
     //TODO: Add more?
 };
 
