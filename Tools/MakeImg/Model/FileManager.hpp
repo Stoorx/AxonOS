@@ -44,7 +44,7 @@ protected:
             uint64_t bufSize = std::min(fromSize - offset, (uint64_t)std::sqrt(fromSize));
             fromFile.read(buffer, bufSize);
             auto getSize = (uint64_t)fromFile.gcount();
-            if (!fromFile || !getSize || (getSize != bufSize)) //TODO: make it clear
+            if (!fromFile || !getSize || (getSize != bufSize)) //TODO: make it clear; i think it is surplus
             {
                 throw; //TODO: throw something
             }
@@ -52,6 +52,8 @@ protected:
             offset += getSize;
         }
         delete[] buffer;
+    
+        fromFile.close();
     }
 };
 

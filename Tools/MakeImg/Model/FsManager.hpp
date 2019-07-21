@@ -17,6 +17,7 @@ public:
 };
 
 enum class OpenFileAttributes {
+    Default // it is temporary
     // TODO: add attributes
 };
 
