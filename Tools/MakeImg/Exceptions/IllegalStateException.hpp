@@ -7,7 +7,7 @@
 #include <exception>
 #include <string>
 
-class IllegalStateException : std::exception {
+class IllegalStateException : public std::exception {
 public:
     explicit IllegalStateException(const std::string& msg);
     

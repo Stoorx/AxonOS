@@ -113,3 +113,35 @@ void MbrPartitionTableManager::setPartitionType(
 }
 //TODO: Refactor: make a cache for partitions entries to avoid reading from the disk
 //TODO: Refactor: think about adding the Context in the manager as a field
+
+void LoopPartitionManager::RegisterPartition(
+    Context& context,
+    uint32_t number,
+    const RegisterPartitionParameters& parameters
+) {
+    // do nothing
+}
+
+void LoopPartitionManager::CreatePartitionTable(Context& context, const CreatePartitionTableParameters& parameters) {
+    // do nothing
+}
+
+bool LoopPartitionManager::DetectPartitionTable(const Context& context) {
+    return true;
+}
+
+PartitionTableType LoopPartitionManager::GetPartitionTableType() const {
+    return PartitionTableType::Loop;
+}
+
+uint64_t LoopPartitionManager::GetPartitionOffset(const Context& context, uint32_t partitionNumber) const {
+    return 0;
+}
+
+uint64_t LoopPartitionManager::GetPartitionSize(const Context& context, uint32_t partitionNumber) const {
+    return context.DiskImage->getSize() / 512; // TODO: 512 IS BAD! Refactor for different sector sizes
+}
+
+void LoopPartitionManager::setPartitionType(Context& context, uint32_t partitionNumber, PartitionType partitionType) {
+    // do nothing
+}

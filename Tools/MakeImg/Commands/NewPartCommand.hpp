@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <set>
+#include <Exceptions/IllegalStateException.hpp>
 
 class NewPartCommand : public Command {
 public:
@@ -41,6 +42,8 @@ public:
                 break;
             case PartitionTableType::GPT:
                 throw std::exception(); // TODO: replace with NotImplementedException with message
+            case PartitionTableType::Loop:
+                throw IllegalStateException("new_part command can not be applied to loop images");
             default:
                 throw std::exception(); // TODO: replace with InvalidParameterError with message
         }

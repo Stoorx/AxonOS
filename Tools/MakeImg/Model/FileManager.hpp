@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include <Model/Context.hpp>
 #include <vector>
+#include <string>
 
+class Context;
 class FileManager {
 public:
     FileManager(Context& context) : ImageContext(context) {}

@@ -15,7 +15,8 @@ enum class PartitionTableType {
     NotSet,
     Invalid,
     MBR,
-    GPT
+    GPT,
+    Loop
 };
 enum class PartitionType {
     Unallocated,
@@ -101,4 +102,19 @@ public:
     void setPartitionType(Context& context, uint32_t partitionNumber, PartitionType partitionType) override;
 protected:
     static std::map<PartitionType, uint8_t> PartitionTypeMapping;
+};
+
+class LoopPartitionManager : public PartitionTableManager {
+public:
+    virtual void RegisterPartition(
+        Context& context,
+        uint32_t number,
+        const RegisterPartitionParameters& parameters
+    ) override;
+    virtual void CreatePartitionTable(Context& context, const CreatePartitionTableParameters& parameters) override;
+    virtual bool DetectPartitionTable(const Context& context) override;
+    virtual PartitionTableType GetPartitionTableType() const override;
+    virtual uint64_t GetPartitionOffset(const Context& context, uint32_t partitionNumber) const override;
+    virtual uint64_t GetPartitionSize(const Context& context, uint32_t partitionNumber) const override;
+    virtual void setPartitionType(Context& context, uint32_t partitionNumber, PartitionType partitionType) override;
 };

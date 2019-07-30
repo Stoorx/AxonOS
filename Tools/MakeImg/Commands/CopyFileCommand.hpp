@@ -36,7 +36,7 @@ public:
                 RecursiveWalk(
                     From, [&](const std::string& currentFile) {
                         std::string toPath = ""; //TODO: make a relatve path from currentFile path
-                        context.FileManager.copyFile(currentFile, toPath, CopyAttributes);
+                        context.ImageFileManager.copyFile(currentFile, toPath, CopyAttributes);
                     }
                 );
             }
@@ -44,7 +44,7 @@ public:
         else {
             // if it is file
             std::string toPath = ""; //TODO: make a relatve path from currentFile path
-            context.FileManager.copyFile(From, toPath, CopyAttributes);
+            context.ImageFileManager.copyFile(From, toPath, CopyAttributes);
         }
     }
 

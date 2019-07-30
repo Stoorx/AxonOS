@@ -14,10 +14,10 @@ class PartitionTableManager;
 
 class Context {
 public:
-    Context() : FileManager(*this) {}
+    Context() : ImageFileManager(*this) {}
     
     std::shared_ptr<DiskImage>                     DiskImage        = nullptr;
     std::shared_ptr<PartitionTableManager>         PartitionManager = nullptr;
     std::map<uint64_t, std::shared_ptr<FsManager>> FilesystemManagers;
-    FileManager                                    FileManager;
+    FileManager                                    ImageFileManager;
 };

@@ -5,6 +5,7 @@
 
 #include <Commands/NewFsCommand.hpp>
 #include <Commands/CopyFileCommand.hpp>
+#include <Commands/NewTableLoopCommand.hpp>
 #include "MakeImg.hpp"
 
 void MakeImg::ExitWithError(const string& message, int exitCode) {
@@ -107,7 +108,10 @@ shared_ptr<Command> MakeImg::ParseNewTable(const vector<string>& inputTokens, ui
             "GPT is not supported yet"
         );
     }
-    
+    else if (inputTokens[inputPosition] == "loop") {
+        inputPosition++;
+        return shared_ptr<Command>(new NewTableLoopCommand());
+    }
     else {
         throw CommandParseException(
             inputPosition,
