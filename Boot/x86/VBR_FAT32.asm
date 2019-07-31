@@ -108,79 +108,80 @@ entry:
     jmp 0:relocated ; 5b
 
 relocated:
-    mov byte [bsDriveNumber], dl     ; store BIOS boot drive number ; 4b
-    sub sp, 16 ; reserve space for locals ; 3b
+    mov byte [bsDriveNumber], dl     ; store BIOS boot drive number ; 4b 0x676
+    sub sp, 16 ; reserve space for locals ; 3b 0x67a
 
     ; Clear screen
-    mov ax, 0x3
-    int 0x10
+    mov ax, 0x3 ; 0x67d
+    int 0x10 ; 0x680
 
 main:
     ; load VBR II
-    mov eax, dword [bpbHiddenSectors]
-    mov di, SECOND_VBR_ADDR
-    mov cx, 1
-    call read_sectors
+    mov eax, dword [bpbHiddenSectors] ; 0x682
+    mov di, SECOND_VBR_ADDR ; 0x686
+    mov cx, 1 ; 0x689
+    call read_sectors ; 0x68c -> 0x785
 
     ; init values
-    movzx ebx, word [bpbReservedSectors] ; 6b
-    add ebx, dword [bpbHiddenSectors] ; 5b
-    mov dword [FIRST_FAT_SECTOR_VAL_ADDRESS], ebx ; calculate first fat sector number ; 5b
+    movzx ebx, word [bpbReservedSectors] ; 6b ; 0x6f8
+    add ebx, dword [bpbHiddenSectors] ; 5b ; 0x695
+    mov dword [FIRST_FAT_SECTOR_VAL_ADDRESS], ebx ; calculate first fat sector number ; 5b ; 0x69a
 
-    movzx eax, byte [bpbNumberOfFATs] ; 6b
-    mul dword [bsSectorsPerFAT32] ; 5b
-    add eax, ebx ; 3b
-    mov dword [FIRST_DATA_SECTOR_VAL_ADDRESS], eax ; calculate first data sector ; 4b
+    movzx eax, byte [bpbNumberOfFATs] ; 6b ; 0x69f
+    mul dword [bsSectorsPerFAT32] ; 5b ; 0x6a5
+    add eax, ebx ; 3b ; 0x6aa
+    mov dword [FIRST_DATA_SECTOR_VAL_ADDRESS], eax ; calculate first data sector ; 4b ; 0x6ad
 
-    movzx eax, byte [bpbSectorsPerCluster] ; 6b
-    mul word [bpbBytesPerSector] ; 4b
-    mov dword [BYTES_PER_CLUSTER_VAL_ADDRESS], eax ; calculate bytes per cluster number ; 4b
+    movzx eax, byte [bpbSectorsPerCluster] ; 6b ; 0x6b1
+    mul word [bpbBytesPerSector] ; 4b ; 0x6b7
+    mov dword [BYTES_PER_CLUSTER_VAL_ADDRESS], eax ; calculate bytes per cluster number ; 4b ; 0x6bb
 
-    xor eax, eax ; 3b
-    dec eax ; 0xFFFFFFFF ; 2b
-    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; initialize fat frame cache ; 4b
+    xor eax, eax ; 3b ; 0x6bf
+    dec eax ; 0xFFFFFFFF ; 2b ; 0x6c2
+    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; initialize fat frame cache ; 4b ; 0x6c4
 
-;mov ax, 0x3535
-;jmp print_error_and_hlt
-search_file:
-    mov ebx, dword [bsRootDirectoryClusterNo] ; current cluster ; 5b
-    mov eax, ebx ; prepare eax for function call ; 3b
-cluster_chain_iterations:
-    call get_first_sector_of_cluster ; 3b
-    mov edx, eax ; edx contains number of current sector ; 3b
-cluster_frame_iterations:
-    mov di, FS_BUFFER
-    mov cx, FS_BUFFER_SIZE_IN_SECTORS
-    call read_sectors
 
-    mov ax, di ; first data record
-file_records_iterations:
-    mov si, ax
-    mov di, bootloader_name
-    mov cx, 11
-    cld
-    repe cmpsb
-    je file_found ; if repe reaches equality of strings
-    add ax, 32 ; size of file record
-    cmp ax, FS_BUFFER_END
-    jb short file_records_iterations ; if we are in buffer
+search_file: ; 0x6c8
+    mov ebx, dword [bsRootDirectoryClusterNo] ; current cluster ; 5b ; 0x6c8
+    mov eax, ebx ; prepare eax for function call ; 3b ; 0x6cd
+cluster_chain_iterations: ; 0x6d0
+    call get_first_sector_of_cluster ; 3b ; 0x6d0 -> 0x773
+    mov edx, eax ; edx contains number of current sector ; 3b ; 0x6d3
+cluster_frame_iterations: ; 0x6d6
+    mov di, FS_BUFFER ; 0x6d6
+    mov cx, FS_BUFFER_SIZE_IN_SECTORS ; 0x6d9
+    call read_sectors ; 0x6dc -> 0x785
 
-    add edx, FS_BUFFER_SIZE_IN_SECTORS ; move edx to next frame
-    mov eax, ebx
-    inc eax
-    call get_first_sector_of_cluster ; find next continuous cluster sector number
-    cmp edx, eax
-    jae short find_next_cluster_of_directory
-    mov eax, edx
-    jmp short cluster_frame_iterations
-find_next_cluster_of_directory:
-    mov eax, ebx
-    xor eax, eax
-    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; reset cache
-    call get_next_cluster
+    mov ax, di ; first data record ; 0x6df
+file_records_iterations: ; 0x6e1
+    mov si, ax ; 0x6e1
+    mov di, bootloader_name ; 0x6e3
+    mov cx, 11 ; 0x6e6
+    cld ; 0x6e9
+    repe cmpsb ; 0x6ea
+    je file_found ; if repe reaches equality of strings ; 0x6ec -> 0x800
+    add ax, 32 ; size of file record ; 0x6f0
+    cmp ax, FS_BUFFER_END ; 0x6f3
+    jb short file_records_iterations ; if we are in buffer ; 0x6f6 -> 0x6e1
 
-    cmp eax, 0x0FFFFFF8 ; 6b
-    jae short file_not_found ; we went through all clusters in chain but have not met the file ; 7b
+    add edx, FS_BUFFER_SIZE_IN_SECTORS ; move edx to next frame ; 0x6f8
+    mov eax, ebx ; 0x6fc
+    inc eax ; 0x6ff
+    call get_first_sector_of_cluster ; find next continuous cluster sector number ; 0x701 -> 0x773
+    cmp edx, eax ; 0x704
+    jae short find_next_cluster_of_directory ; 0x707 -> 0x70e
+    mov eax, edx ; 0x709 // POTENTIAL BUG HERE
+    jmp short cluster_frame_iterations ; 0x70c -> 0x6d6
+find_next_cluster_of_directory: ; 0x70e
+    mov eax, ebx ; 0x70e
+    xor eax, eax ; 0x711
+    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; reset cache ; 0x714
+    call get_next_cluster ; 0x718 -> 0x729
+
+    cmp eax, 0x0FFFFFF8 ; 6b ; 0x71b
+    jae file_not_found ; we went through all clusters in chain but have not met the file ; 7b ; Does not work! Infinite loop!
+    ;mov ax, 0x3535
+    ;jmp print_error_and_hlt ;
     mov ebx, eax
     jmp short cluster_chain_iterations
 
@@ -234,13 +235,13 @@ ret
 ;;  Args: EAX = cluster number              ;;
 ;;  Output: EAX = number of sector          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-get_first_sector_of_cluster:
-push edx
-    sub eax, 2
-    mul byte [bpbSectorsPerCluster]
-    add eax, dword [FIRST_DATA_SECTOR_VAL_ADDRESS]
-pop edx
-ret
+get_first_sector_of_cluster: ; 0x773
+push edx ; 0x773
+    sub eax, 2 ; 0x775
+    mul byte [bpbSectorsPerCluster] ; 0x779
+    add eax, dword [FIRST_DATA_SECTOR_VAL_ADDRESS] ; 0x77d
+pop edx ; 0x782
+ret ; 0x784
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Function: read_sectors                  ;;
@@ -248,30 +249,30 @@ ret
 ;;        ES:DI = start address             ;;
 ;;        CX = sectors count                ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-read_sectors:
-push eax
-push dx
-push si
-push di
-    push dword 0x0 ; Push starting sector high.
-    push eax ; Push starting sector low.
-    push es ; Buffer segment.
-    push di ; Buffer offset.
-    push cx ; Push the sector count.
-    push word 0x10 ; Push reserved and packet size.
+read_sectors: ; 0x785
+push eax ; 0x785
+push dx ; 0x787
+push si ; 0x788
+push di ; 0x789
+    push dword 0x0 ; Push starting sector high. ; 0x78a
+    push eax ; Push starting sector low. ; 0x78d
+    push es ; Buffer segment. ; 0x78f
+    push di ; Buffer offset. ; 0x790
+    push cx ; Push the sector count. ; 0x791
+    push word 0x10 ; Push reserved and packet size. ; 0x792
 
-    clc
-    mov ah, 0x42 ; Function 0x42, extended read.
-    mov dl, byte [bsDriveNumber] ; Load the drive number.
-    mov si, sp ; SI points to the disk packet address.
-    int 0x13 ; Read the sector from the disk.
-    add sp, 0x10
-    jc short read_error
-pop di
-pop si
-pop dx
-pop eax
-ret
+    clc ; 0x794
+    mov ah, 0x42 ; Function 0x42, extended read. ; 0x795
+    mov dl, byte [bsDriveNumber] ; Load the drive number. ; 0x797
+    mov si, sp ; SI points to the disk packet address. ; 0x79b
+    int 0x13 ; Read the sector from the disk. ; 0x79d
+    add sp, 0x10 ; 0x79f
+    jc short read_error ; 0x7a2 -> 0x7b0
+pop di ; 0x7a4
+pop si ; 0x7a5
+pop dx ; 0x7a6
+pop eax ; 0x7a7
+ret ; 0x7a9
 
 
 ;;                          ;;
@@ -284,7 +285,7 @@ ret
 file_not_found:
     ; error code "0x01"
     mov ax, 0x3130
-    call near print_error_and_hlt
+    jmp near print_error_and_hlt
 read_error:
     ; error code "0x02"
     mov ax, 0x3230
