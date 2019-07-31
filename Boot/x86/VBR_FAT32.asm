@@ -12,11 +12,13 @@
 ;;  +------------------------+ 00500H   ;;
 ;;  | PrtScr Status / Unused |          ;;
 ;;  +------------------------+ 00600H   ;;
-;;  |          VBR           |          ;;
+;;  |       VBR (512 B)      |          ;;
 ;;  +------------------------+ 00800H   ;;
-;;  |      Buffer (1 KB)     |          ;;
+;;  |      VBR II (512 B)    |          ;;
+;;  +------------------------+ 00A00H   ;;
+;;  |    VBR stack (512 B)   |          ;;
 ;;  +------------------------+ 00C00H   ;;
-;;  |    MBR stack (1 KB)    |          ;;
+;;  |      Buffer (1 KB)     |          ;;
 ;;  +------------------------+ 01000H   ;;
 ;;  |   BootLoader (508 KB)  |          ;;
 ;;  +------------------------+ 80000H   ;;
@@ -29,20 +31,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 %define RELOCATED_ADDR 0x600
+%define SECOND_VBR_ADDR 0x800
 %define BOOT_ADDR 0x7C00
-%define VBR_STACK 0x1000
-%define FS_BUFFER 0x800
-%define FS_BUFFER_END 0xC00
+%define VBR_STACK 0xC00
+%define FS_BUFFER 0xC00
+%define FS_BUFFER_END 0x1000
 %define FS_BUFFER_SIZE 0x400
 %define FS_BUFFER_SIZE_IN_SECTORS 0x2
 %define BOOTLOADER_ADDR 0x1000
 %define VBR_SIZE 512
-%define PARTITION_TABLE_ADDR (RELOCATED_ADDR + 0x1BE)
-%define PARTITION_ENTRIES_COUNT 4
-%define ACTIVE_PARTITION_FLAG 0x80
-%define PASSIVE_PARTITION_FLAG 0x0
-%define PARTITION_ENTRY_SIZE 0x10
-%define PARTITION_LBA_OFFSET 0x8
 %define BOOT_SIGNATURE_ADDR (BOOT_ADDR + 0x1FE)
 
 %define FIRST_DATA_SECTOR_VAL_ADDRESS (VBR_STACK - 4)
@@ -53,8 +50,8 @@
 [BITS 16]
 [ORG RELOCATED_ADDR]
 start:
-    jmp short entry
-    nop
+    jmp short entry ; 2b
+    nop ; 1b
 bsOemName:               DB      "AxonBoot"      ; 0x03
 
 ; BPB1:
@@ -90,38 +87,67 @@ bsFileSystemName:                db      "FAT32   "      ; 0x52
 ; Code start
 entry:
     ; Context:
-    ; AX = 0
-    ; ES, DS, SS, CS = 0
     ; DL = drive number
-    ; IP = 0x600
+    ; IP = 0x7C00
 
-    mov byte [bsDriveNumber], dl     ; store BIOS boot drive number
-    sub sp, 16 ; reserve space for locals
+    ; init registers
+    xor ax, ax ; 2b
+    mov ds, ax ; 2b
+    mov es, ax ; 2b
+    mov ss, ax ; 2b
+
+    ; copying to new address
+    mov sp, VBR_STACK ; 3b
+    mov si, BOOT_ADDR ; 3b
+    mov di, RELOCATED_ADDR ; 3b
+    mov cx, VBR_SIZE ; 3b
+    cld ; 1b
+    rep movsb ; 2b
+
+    ; jump to new location
+    jmp 0:relocated ; 5b
+
+relocated:
+    mov byte [bsDriveNumber], dl     ; store BIOS boot drive number ; 4b
+    sub sp, 16 ; reserve space for locals ; 3b
+
+    ; Clear screen
+    mov ax, 0x3
+    int 0x10
 
 main:
-    movzx ebx, word [bpbReservedSectors]
-    add ebx, dword [bpbHiddenSectors]
-    mov dword [FIRST_FAT_SECTOR_VAL_ADDRESS], ebx ; calculate first fat sector number
+    ; load VBR II
+    mov eax, dword [bpbHiddenSectors]
+    mov di, SECOND_VBR_ADDR
+    mov cx, 1
+    call read_sectors
 
-    movzx eax, byte [bpbNumberOfFATs]
-    mul dword [bsSectorsPerFAT32]
-    add eax, ebx
-    mov dword [FIRST_DATA_SECTOR_VAL_ADDRESS], eax ; calculate first data sector
+    ; init values
+    movzx ebx, word [bpbReservedSectors] ; 6b
+    add ebx, dword [bpbHiddenSectors] ; 5b
+    mov dword [FIRST_FAT_SECTOR_VAL_ADDRESS], ebx ; calculate first fat sector number ; 5b
 
-    movzx eax, byte [bpbSectorsPerCluster]
-    mul word [bpbBytesPerSector]
-    mov dword [BYTES_PER_CLUSTER_VAL_ADDRESS], eax ; calculate bytes per cluster number
+    movzx eax, byte [bpbNumberOfFATs] ; 6b
+    mul dword [bsSectorsPerFAT32] ; 5b
+    add eax, ebx ; 3b
+    mov dword [FIRST_DATA_SECTOR_VAL_ADDRESS], eax ; calculate first data sector ; 4b
 
-    xor eax, eax
-    dec eax ; 0xFFFFFFFF
-    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; initialize fat frame cache
+    movzx eax, byte [bpbSectorsPerCluster] ; 6b
+    mul word [bpbBytesPerSector] ; 4b
+    mov dword [BYTES_PER_CLUSTER_VAL_ADDRESS], eax ; calculate bytes per cluster number ; 4b
 
+    xor eax, eax ; 3b
+    dec eax ; 0xFFFFFFFF ; 2b
+    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; initialize fat frame cache ; 4b
+
+;mov ax, 0x3535
+;jmp print_error_and_hlt
 search_file:
-    mov ebx, dword [bsRootDirectoryClusterNo] ; current cluster
-    mov eax, ebx ; prepare eax for function call
+    mov ebx, dword [bsRootDirectoryClusterNo] ; current cluster ; 5b
+    mov eax, ebx ; prepare eax for function call ; 3b
 cluster_chain_iterations:
-    call get_first_sector_of_cluster
-    mov edx, eax ; edx contains number of current sector
+    call get_first_sector_of_cluster ; 3b
+    mov edx, eax ; edx contains number of current sector ; 3b
 cluster_frame_iterations:
     mov di, FS_BUFFER
     mov cx, FS_BUFFER_SIZE_IN_SECTORS
@@ -153,42 +179,12 @@ find_next_cluster_of_directory:
     mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; reset cache
     call get_next_cluster
 
-    cmp eax, 0x0FFFFFF8
-    jae file_not_found ; we went through all clusters in chain but have not met the file
+    cmp eax, 0x0FFFFFF8 ; 6b
+    jae short file_not_found ; we went through all clusters in chain but have not met the file ; 7b
     mov ebx, eax
     jmp short cluster_chain_iterations
 
-file_found:
-    ; AX - file record
-    mov bx, ax
-    movzx eax, word [bx + 0x14]
-    shl eax, 16
-    mov ax, word [bx + 0x1A] ; first cluster in eax
 
-    mov ebp, BOOTLOADER_ADDR ; current position in ebp
-    movzx cx, byte [bpbSectorsPerCluster]
-
-file_read_loop:
-;EBP - current position in memory
-;EAX - current cluster
-    mov ebx, ebp
-    shr ebx, 4
-    mov es, bx
-    mov di, bp
-    and di, 0xF ; normalize address
-    mov ebx, eax ; save cluster number
-    call get_first_sector_of_cluster
-    call read_sectors
-    inc eax
-    call get_next_cluster
-    cmp eax, 0x0FFFFFF8
-    jae file_read_complete
-    add ebp, dword [BYTES_PER_CLUSTER_VAL_ADDRESS] ; move ebp to next position
-    jmp short file_read_loop
-
-file_read_complete:
-    mov dl, byte [bsDriveNumber]
-    jmp BOOTLOADER_ADDR
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  HELPER FUNCTIONS                        ;;
@@ -208,7 +204,7 @@ push di
     shr eax, 8 ; eax contains fat frame number
 
     cmp eax, dword [CURRENT_FAT_OFFSET_VAL_ADDRESS]
-    je next
+    je short next
 
     ; load fat frame
     mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; update cache
@@ -219,14 +215,14 @@ push di
     xor bx, bx
     mov es, bx
     mov di, FS_BUFFER
-    mov ecx, FS_BUFFER_SIZE_IN_SECTORS
+    mov ecx, FS_BUFFER_SIZE_IN_SECTORS ; 6b !!!
     call read_sectors
 
     next:
     shl bx, 2 ; mul by 4 (size of fat entry)
     add bx, FS_BUFFER
     mov eax, dword [bx]
-    and eax, 0x0FFFFFFF
+    and eax, 0x0FFFFFFF ; 6b
 pop di
 pop es
 pop ebx
@@ -270,7 +266,7 @@ push di
     mov si, sp ; SI points to the disk packet address.
     int 0x13 ; Read the sector from the disk.
     add sp, 0x10
-    jc read_error
+    jc short read_error
 pop di
 pop si
 pop dx
@@ -290,9 +286,9 @@ file_not_found:
     mov ax, 0x3130
     call near print_error_and_hlt
 read_error:
-    ; error code "0x04"
-    mov ax, 0x3430
-    call near print_error_and_hlt
+    ; error code "0x02"
+    mov ax, 0x3230
+;    call near print_error_and_hlt
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Printing function       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -317,14 +313,14 @@ print_loop:
 hlt_system:
     cli
     hlt
-    jmp hlt_system
+    jmp short hlt_system
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;  Data: error messages    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 error_msg:
-db "E:0x"
+db "VBR Error: 0x"
 error_code:
-dw 0x3030
+dw "00"
 db 0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -337,3 +333,37 @@ times (510-($-$$)) db 0
 ;;  Boot signature          ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 db 0x55, 0xAA
+
+file_found:
+    ; AX - file record
+    mov bx, ax
+    movzx eax, word [bx + 0x14]
+    shl eax, 16
+    mov ax, word [bx + 0x1A] ; first cluster in eax
+
+    mov ebp, BOOTLOADER_ADDR ; current position in ebp ; 6b
+    movzx cx, byte [bpbSectorsPerCluster] ; 5b
+
+file_read_loop:
+;EBP - current position in memory
+;EAX - current cluster
+    mov ebx, ebp
+    shr ebx, 4
+    mov es, bx
+    mov di, bp
+    and di, 0xF ; normalize address
+    mov ebx, eax ; save cluster number
+    call get_first_sector_of_cluster
+    call read_sectors
+    inc eax
+    call get_next_cluster
+    cmp eax, 0x0FFFFFF8 ; 6b
+    jae file_read_complete
+    add ebp, dword [BYTES_PER_CLUSTER_VAL_ADDRESS] ; move ebp to next position ; 5b
+    jmp short file_read_loop
+
+file_read_complete:
+    mov dl, byte [bsDriveNumber]
+    jmp BOOTLOADER_ADDR
+
+times (1024-($-$$)) db 0
