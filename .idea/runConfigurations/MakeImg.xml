@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MakeImg" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="new_image axon.img -sm 64 new_table loop new_fs fat32 -n 0 -p_reserved_sectors 32 -p_label &quot;Axon OS&quot; -p_boot VBR.bin -p_fsinfo 4" PASS_PARENT_ENVS_2="true" PROJECT_NAME="AxonOS" TARGET_NAME="MakeImg" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="AxonOS" RUN_TARGET_NAME="MakeImg">
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>
