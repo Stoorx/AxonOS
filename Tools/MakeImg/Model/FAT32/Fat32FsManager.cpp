@@ -6,6 +6,8 @@
 #include "Fat32FsManager.hpp"
 #include "Exceptions/IncorrectParameterException.hpp"
 #include "Util/Math.hpp"
+#include <cstring>
+#include <stdlib.h>
 
 Fat32FsManager::Fat32FsManager(Context& context, uint32_t partitionNumber) :
     FsManager(context),
@@ -71,28 +73,40 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
         memcpy(bpb.VolumeLabel, partParams->getVolumeLabel().c_str(), 11);
         memcpy(bpb.FilesystemName, partParams->getFilesystemName().c_str(), 8);
     
-        uint8_t       vbr[512];
-        std::ifstream vbrFile;
+        std::vector<uint8_t> vbr;
+        uint64_t             vbrSize = 0;
+        std::ifstream        vbrFile;
         if (!partParams->getBootsectorFileName().empty()) {
-            vbrFile.open(partParams->getBootsectorFileName(), std::ifstream::binary);
+            vbrFile.open(partParams->getBootsectorFileName(), std::ifstream::binary | std::ifstream::ate);
             if (!vbrFile.good()) {
                 throw FileNotFoundException(partParams->getBootsectorFileName());
             }
-            vbrFile.read((char*)vbr, 512);
+            vbrSize = vbrFile.tellg();
+            vbrFile.seekg(0);
+            vbr.resize(vbrSize);
+            vbrFile.read((char*)vbr.data(), vbrSize);
         }
         else {
-            memset(vbr, 0, 512);
+            vbr.resize(512);
+            vbrSize = 512;
+            memset(vbr.data(), 0, 512);
             //add jump over BPB. Windows checks it.
-            vbr[0]   = 0xeb; // jmp short
-            vbr[1]   = 0x58; // [start]
-            vbr[2]   = 0x90; // nop
+            vbr[0] = 0xeb; // jmp short
+            vbr[1] = 0x00; // [start]
+            vbr[2] = 0x90; // nop
             vbr[510] = 0x55;
             vbr[511] = 0xAA;
         }
         this->FatHeaderCache = bpb;
-        memcpy(vbr + 3, (void*)&bpb, sizeof(bpb));
-        ImageContext.DiskImage->writeBuffer(bpb.HiddenSectorsCount * 512, vbr, 512); // TODO: 512 IS BAD! REFACTOR LATER
-        ImageContext.DiskImage->writeBuffer((bpb.HiddenSectorsCount + bpb.BackupBootsectorSector) * 512, vbr, 512);
+        memcpy(vbr.data() + 3, (void*)&bpb, sizeof(bpb));
+        ImageContext.DiskImage
+                    ->writeBuffer(
+                        bpb.HiddenSectorsCount * 512,
+                        vbr.data(),
+                        vbrSize
+                    ); // TODO: 512 IS BAD! REFACTOR LATER
+        ImageContext.DiskImage
+                    ->writeBuffer((bpb.HiddenSectorsCount + bpb.BackupBootsectorSector) * 512, vbr.data(), vbrSize);
     
         Fat32FsInfoBlock fsInfo;
         fsInfo.NextFree  = 2;
