@@ -118,6 +118,7 @@ relocated:
 main:
     ; load VBR II
     mov eax, dword [bpbHiddenSectors] ; 0x682
+    inc eax
     mov di, SECOND_VBR_ADDR ; 0x686
     mov cx, 1 ; 0x689
     call read_sectors ; 0x68c -> 0x785
@@ -357,7 +358,7 @@ file_read_loop:
     mov ebx, eax ; save cluster number
     call get_first_sector_of_cluster
     call read_sectors
-    inc eax
+    mov eax, ebx ; restore cluster number
     call get_next_cluster
     cmp eax, 0x0FFFFFF8 ; 6b
     jae file_read_complete
