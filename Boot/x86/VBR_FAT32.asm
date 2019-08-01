@@ -173,9 +173,10 @@ file_records_iterations: ; 0x6e1
     mov eax, edx ; 0x709 // POTENTIAL BUG HERE
     jmp short cluster_frame_iterations ; 0x70c -> 0x6d6
 find_next_cluster_of_directory: ; 0x70e
-    mov eax, ebx ; 0x70e
-    xor eax, eax ; 0x711
-    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; reset cache ; 0x714
+    xor eax, eax
+    dec eax ; 0xFFFF'FFFF
+    mov dword [CURRENT_FAT_OFFSET_VAL_ADDRESS], eax ; reset cache
+    mov eax, ebx
     call get_next_cluster ; 0x718 -> 0x729
 
     cmp eax, 0x0FFFFFF8 ; 6b ; 0x71b
