@@ -270,7 +270,7 @@ shared_ptr<Command> MakeImg::ParseCopyFile(const vector<string>& inputTokens, ui
 void MakeImg::Main(vector<string>& args) {
     if (args.empty())
         ExitProcess(1);
-    if (args.at(0) == "help")
+    if (args.at(0) == "help" || args.at(0) == "--help" || args.at(0) == "-h")
         ExitWithUsage();
     try {
         CommandSequence commandSequence;

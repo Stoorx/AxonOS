@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <cstring>
 #include <string>
 
 #pragma pack(push, 1)
