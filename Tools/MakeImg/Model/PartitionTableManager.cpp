@@ -32,7 +32,7 @@ void MbrPartitionTableManager::CreatePartitionTable(
                 throw FileNotFoundException(params->BootsectorFileName);
             }
         }
-        context.DiskImage->writeBuffer(0, mbr, 512);
+        context.CurrentDiskImage->writeBuffer(0, mbr, 512);
     }
     else throw IllegalStateException("Bad cast");
 }
@@ -45,7 +45,7 @@ void MbrPartitionTableManager::RegisterPartition(
     auto params = dynamic_cast<const MbrRegisterPartitionParameters*>(&parameters);
     if (params != nullptr) {
         uint8_t mbr[512];
-        context.DiskImage->readBuffer(0, mbr, 512);
+        context.CurrentDiskImage->readBuffer(0, mbr, 512);
         auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + number;
         
         partitionEntry->Active =
@@ -59,15 +59,15 @@ void MbrPartitionTableManager::RegisterPartition(
         partitionEntry->EndCylinderLow          = params->EndCylinderLow;
         partitionEntry->StartLBA                = params->StartLBA;
         partitionEntry->SizeLBA                 = params->EndLBA - params->StartLBA + 1;
-        
-        context.DiskImage->writeBuffer(0, mbr, 512);
+    
+        context.CurrentDiskImage->writeBuffer(0, mbr, 512);
     }
     else throw IllegalStateException("Bad cast");
 }
 
 bool MbrPartitionTableManager::DetectPartitionTable(const Context& context) {
     uint8_t mbr[512];
-    context.DiskImage->readBuffer(0, mbr, 512);
+    context.CurrentDiskImage->readBuffer(0, mbr, 512);
     return mbr[510] == 0x55 && mbr[511] == 0xAA;
 }
 
@@ -77,14 +77,14 @@ PartitionTableType MbrPartitionTableManager::GetPartitionTableType() const {
 
 uint64_t MbrPartitionTableManager::GetPartitionOffset(const Context& context, uint32_t partitionNumber) const {
     uint8_t mbr[512];
-    context.DiskImage->readBuffer(0, mbr, 512);
+    context.CurrentDiskImage->readBuffer(0, mbr, 512);
     auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + partitionNumber;
     return partitionEntry->StartLBA;
 }
 
 uint64_t MbrPartitionTableManager::GetPartitionSize(const Context& context, uint32_t partitionNumber) const {
     uint8_t mbr[512];
-    context.DiskImage->readBuffer(0, mbr, 512);
+    context.CurrentDiskImage->readBuffer(0, mbr, 512);
     auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + partitionNumber;
     return partitionEntry->SizeLBA;
 }
@@ -95,13 +95,13 @@ void MbrPartitionTableManager::setPartitionType(
     PartitionType partitionType
 ) {
     uint8_t mbr[512];
-    context.DiskImage->readBuffer(0, mbr, 512);
+    context.CurrentDiskImage->readBuffer(0, mbr, 512);
     auto partitionEntry = (MbrPartitionEntry*)(&mbr[MbrPartitionEntry::FirstEntryOffset]) + partitionNumber;
     
     auto mappingIt = PartitionTypeMapping.find(partitionType);
     if (mappingIt != PartitionTypeMapping.end()) {
         partitionEntry->PartitionType = mappingIt->second;
-        context.DiskImage->writeBuffer(0, mbr, 512);
+        context.CurrentDiskImage->writeBuffer(0, mbr, 512);
     }
     else {
         throw IncorrectParameterException(
@@ -139,7 +139,7 @@ uint64_t LoopPartitionManager::GetPartitionOffset(const Context& context, uint32
 }
 
 uint64_t LoopPartitionManager::GetPartitionSize(const Context& context, uint32_t partitionNumber) const {
-    return context.DiskImage->getSize() / 512; // TODO: 512 IS BAD! Refactor for different sector sizes
+    return context.CurrentDiskImage->getSize() / 512; // TODO: 512 IS BAD! Refactor for different sector sizes
 }
 
 void LoopPartitionManager::setPartitionType(Context& context, uint32_t partitionNumber, PartitionType partitionType) {

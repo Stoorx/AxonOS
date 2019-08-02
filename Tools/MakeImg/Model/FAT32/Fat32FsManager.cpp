@@ -99,19 +99,19 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
         }
         this->FatHeaderCache = bpb;
         memcpy(vbr.data() + 3, (void*)&bpb, sizeof(bpb));
-        ImageContext.DiskImage
+        ImageContext.CurrentDiskImage
                     ->writeBuffer(
                         bpb.HiddenSectorsCount * 512,
                         vbr.data(),
                         vbrSize
                     ); // TODO: 512 IS BAD! REFACTOR LATER
-        ImageContext.DiskImage
+        ImageContext.CurrentDiskImage
                     ->writeBuffer((bpb.HiddenSectorsCount + bpb.BackupBootsectorSector) * 512, vbr.data(), vbrSize);
     
         Fat32FsInfoBlock fsInfo;
         fsInfo.NextFree  = 2;
         fsInfo.FreeCount = clustersCount;
-        ImageContext.DiskImage
+        ImageContext.CurrentDiskImage
                     ->writeBuffer((bpb.HiddenSectorsCount + bpb.FsInfoSector) * 512,
                                   (uint8_t*)&fsInfo,
                                   512
@@ -122,19 +122,19 @@ void Fat32FsManager::FormatPartition(const FsFormatPartitionParameters& params) 
         uint32_t eoc       = 0x0FFF'FFF8;
         
         for (uint8_t i = 0; i < FatHeaderCache.NumberOfFats; ++i) {
-            ImageContext.DiskImage
+            ImageContext.CurrentDiskImage
                         ->writeInt(
                             (this->GetFatFirstSector() + FatHeaderCache.TableSize_32 * i) *
                             FatHeaderCache.BytesPerSector +
                             sizeof(uint32_t) * 0, fat0Entry
                         );
-            ImageContext.DiskImage
+            ImageContext.CurrentDiskImage
                         ->writeInt(
                             (this->GetFatFirstSector() + FatHeaderCache.TableSize_32 * i) *
                             FatHeaderCache.BytesPerSector +
                             sizeof(uint32_t) * 1, fat1Entry
                         );
-            ImageContext.DiskImage
+            ImageContext.CurrentDiskImage
                         ->writeInt(
                             (this->GetFatFirstSector() + FatHeaderCache.TableSize_32 * i) *
                             FatHeaderCache.BytesPerSector +

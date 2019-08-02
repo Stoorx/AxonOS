@@ -9,11 +9,11 @@
 #include <fstream>
 
 void LoadImageCommand::Execute(Context& context) {
-    if (context.DiskImage != nullptr) {
+    if (context.CurrentDiskImage != nullptr) {
         throw IllegalStateException("Attempt of creating new image while active image exists");
     }
     if(std::ifstream(FileName)){
-        context.DiskImage = std::make_shared<DiskImage>(FileName);
+        context.CurrentDiskImage = std::make_shared<DiskImage>(FileName);
     }else{
         throw FileNotFoundException(FileName);
     }
