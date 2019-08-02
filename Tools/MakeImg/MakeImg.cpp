@@ -19,7 +19,7 @@ void MakeImg::ExitWithUsage() {
          "Usage:\n"
          "    makeimg [new_image file_name -[sb|sk|sm|sg|ss] size]\n"
          "            [load_image img_file_name]\n"
-         "            [new_table <mbr|gpt> -b mbr_file]\n"
+         "            [new_table <mbr|gpt|loop> -b mbr_file]\n"
          "            [new_part partition_number -b begin -e end -f flags]\n"
          "            [new_fs fs_type -n part_number -p_* params]\n"
          "Commands:\n"
