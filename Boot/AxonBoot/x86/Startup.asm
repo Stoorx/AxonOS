@@ -32,8 +32,10 @@
 %define LOADER_STACK_16 0x1000
 %define LOADER_STACK_32 0x80000
 
-;[SECTION .text16]
-[ORG BOOT_ADDR]
+extern Main
+
+[SECTION .text16]
+;[ORG BOOT_ADDR]
 [BITS 16]
 start:
     ; Context:
@@ -49,11 +51,11 @@ start:
 
     in al, 0x92
     test al, 2
-    jnz a20_enabled
+    jnz .a20_enabled
     or al, 2
     and al, 0xFE
     out 0x92, al
-    a20_enabled:
+    .a20_enabled:
 
     cli
 
@@ -67,23 +69,15 @@ start:
     mov bp, sp
     lgdt [bp]
 
-    jmp 0x8:.protected_entry
+    jmp 0x8:.fake_protected_entry
 
 [BITS 32]
-.protected_entry:
-    mov ax, 16 ; Data selector
-    mov ds, ax
-    mov ss, ax
-    mov es, ax
-    mov dword [0xB8000], 0x07320733 ; Prints "32"
-    ; TODO: initialize protected stack and C-decl function call
-hlt_system:
-    cli
-    hlt
-    jmp short hlt_system
+.fake_protected_entry:
+    jmp protected_entry
+[BITS 16]
 
-
-;[SECTION .data16]
+[SECTION .data16]
+align 8
 GDT:
 .null_desctiptor:
     dd 0x0
@@ -104,3 +98,19 @@ GDT:
     db 0x0 ; Base
 .end:
 
+[SECTION .text]
+[BITS 32]
+protected_entry:
+    mov ax, 16 ; Data selector
+    mov ds, ax
+    mov ss, ax
+    mov es, ax
+    ;mov dword [0xB8000], 0x07320733 ; Prints "32"
+    ; TODO: initialize protected stack and C-decl function call
+    call Main
+    ; pass
+hlt_system:
+    cli
+    hlt
+    jmp short hlt_system
+[SECTION .data]
