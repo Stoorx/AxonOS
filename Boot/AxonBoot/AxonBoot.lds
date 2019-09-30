@@ -1,6 +1,5 @@
 ENTRY("start")
 OUTPUT_FORMAT("binary")
-STARTUP("Startup.asm.o")
 
 _AXONBOOT_START_ADDR = 0x1000;
 

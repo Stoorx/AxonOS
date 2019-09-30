@@ -203,7 +203,7 @@ get_next_cluster:
 push ebx
 push es
 push di
-    mov ebx, eax
+    push eax
     shr eax, 8 ; eax contains fat frame number
 
     cmp eax, dword [CURRENT_FAT_OFFSET_VAL_ADDRESS]
@@ -222,9 +222,10 @@ push di
     call read_sectors
 
     next:
-    shl bx, 2 ; mul by 4 (size of fat entry)
-    add bx, FS_BUFFER
-    mov eax, dword [bx]
+    pop ebx
+    shl ebx, 2 ; mul by 4 (size of fat entry)
+    add ebx, FS_BUFFER
+    mov eax, dword [ebx]
     and eax, 0x0FFFFFFF ; 6b
 pop di
 pop es
