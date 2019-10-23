@@ -1,27 +1,38 @@
-# Includes
-include(ProcessorCount)
-
-# Global Config
 cmake_minimum_required(VERSION 3.12)
-project(AxonOS C CXX ASM)
-include(BuildConfig.cmake)
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
+# Includes
+project(AxonOS)
+add_definitions(-D__AXON__)
+
 set(CMAKE_CXX_STANDARD 17)
 
-# Ad-hoc
-set(CMAKE_CXX_FLAGS "-fpermissive")
+# Build config
+include(BuildConfig.cmake)
 
-# custom directoriest
-set(CMAKE_TEMP_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/temp)
-file(MAKE_DIRECTORY ${CMAKE_TEMP_OUTPUT_DIRECTORY})
-
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# Enable Languages
+enable_language(C)
+enable_language(CXX)
+enable_language(ASM_NASM)
 
 
-# Directories
+# Util
+include(sdk/cmake/util/compiler-flags.cmake)
+
+# Versioning
+include(sdk/cmake/version.cmake)
+
+# Internationalization configure
+# TODO
+
+# Generic macros
+# include(cmake/util/macro.cmake)
+# TODO
+
+# Include directories TODO
+
+# Add subdirectories TODO
 add_subdirectory(Boot)
-add_subdirectory(Kernel)
-add_subdirectory(Test)
-add_subdirectory(Tools)
+#add_subdirectory(Kernel)
+#add_subdirectory(Test)
+add_subdirectory(tools)
+

@@ -30,5 +30,11 @@ SECTIONS {
         *.o(.rodata)
         _RODATA32_END = .;
     }
+    .eh_frame : {
+        *.o(.eh_frame)
+    }
     _AXONBOOT_END_ADDR = .;
+    /DISCARD/ : {
+        *(.comment)
+    }
 }

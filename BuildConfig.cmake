@@ -1,5 +1,7 @@
-set(DIST_DIR ${CMAKE_SOURCE_DIR}/Dist)
+# AxonOS main build config
 
-set(TARGET_ARCHITECTURE "x86")
+set(Arch "amd64" CACHE STRING
+        "Set target architecture: x86 amd64. ARM is not supported yet.")
 
-set(NASM_EXECUTABLE "nasm")
+set(CrossEnvPath "/usr/x86_64-pc-linux-gnu" CACHE STRING
+        "Path to binutils for crosscompilling.")

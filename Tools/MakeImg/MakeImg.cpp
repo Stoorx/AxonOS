@@ -160,7 +160,7 @@ shared_ptr<Command> MakeImg::ParseNewPart(const vector<string>& inputTokens, uin
             ++i;
             auto flagsStr    = inputTokens[inputPosition + i];
             auto flagsVector = StringUtil::Split(flagsStr, ',');
-            flags = set(flagsVector.begin(), flagsVector.end());
+            flags = set<string>(flagsVector.begin(), flagsVector.end());
         }
         else if (currentToken[0] == '-') {
             throw CommandParseException(inputPosition + i, currentToken, "Unknown parameter");

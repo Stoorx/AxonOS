@@ -32,7 +32,7 @@
 %define LOADER_STACK_16 0x1000
 %define LOADER_STACK_32 0x80000
 
-extern Main
+extern main
 
 [SECTION .text16]
 ;[ORG BOOT_ADDR]
@@ -107,7 +107,7 @@ protected_entry:
     mov es, ax
     ;mov dword [0xB8000], 0x07320733 ; Prints "32"
     ; TODO: initialize protected stack and C-decl function call
-    call Main
+    call main
     ; pass
 hlt_system:
     cli
