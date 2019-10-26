@@ -84,3 +84,12 @@ function(AddLinkerScript target linkerScript)
     add_custom_target(${linkerScript} DEPENDS ${linkerScript} SOURCES ${linkerScript})
     add_dependencies(${target} ${linkerScript})
 endfunction()
+
+function(AddFileToDist filePath distPath)
+    add_custom_command(
+            OUTPUT ${DistDirectory}/${distPath}
+            COMMAND ${CMAKE_COMMAND} -E copy ${filePath} ${DistDirectory}/${distPath}
+            DEPENDS ${filePath}
+    )
+    add_custom_target(dist-${distPath} ALL DEPENDS ${DistDirectory}/${distPath})
+endfunction()

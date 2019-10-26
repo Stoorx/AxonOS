@@ -5,3 +5,8 @@ set(Arch "amd64" CACHE STRING
 
 set(CrossEnvPath "/usr/x86_64-pc-linux-gnu" CACHE STRING
         "Path to binutils for crosscompilling.")
+
+set(DistDirectory "${CMAKE_CURRENT_SOURCE_DIR}/dist" CACHE STRING
+        "Where is raw distribution directory.")
+
+set(CMAKE_VERBOSE_MAKEFILE FALSE)

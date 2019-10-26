@@ -5,7 +5,7 @@ set(SubArch "" CACHE STRING
 set(TuneArch "athlon64" CACHE STRING
         "Tune instructions for CPU type. One of: k8 opteron athlon64 athlon-fx")
 
-set(OptimizeLevel "4" CACHE STRING
+set(OptimizeLevel "0" CACHE STRING
         "What level of optimization to use.
             0 = off
             1 = Default option, optimize for size (-Os) with some additional options

@@ -24,3 +24,5 @@ set(BuildUser TRUE CACHE BOOL
         "Build user mode applications.")
 
 add_definitions(-D_X86_ -D_i386_)
+
+
