@@ -20,8 +20,8 @@ typedef char Bool;
 #endif
 
 // 1 byte
-typedef char SByte, * SBytePtr;
-typedef unsigned char Byte, * BytePtr;
+typedef char SByte, * SBytePtr, Char8, * Char8Ptr;
+typedef unsigned char           Byte, * BytePtr;
 
 // 2 bytes
 typedef short Short, * ShortPtr;
@@ -43,6 +43,12 @@ typedef long double LongDouble, * LongDoublePtr;
 // Machine dependent
 typedef long SWord, * SWordPtr;
 typedef unsigned long Word, * WordPtr;
+
+#ifdef _X86_
+typedef unsigned int SizeT;
+#else
+typedef unsigned long long SizeT;
+#endif
 
 #ifdef __cplusplus
 };

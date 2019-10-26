@@ -23,7 +23,7 @@ set(KernelDebugger FALSE CACHE BOOL
 set(BuildUser TRUE CACHE BOOL
         "Build user mode applications.")
 
-add_definitions(-D_AMD64_ -D_X86_64_)
-add_definitions(-U_X86_ -U_i386_)
+#add_definitions(-D_AMD64_ -D_X86_64_)
+#add_definitions(-U_X86_ -U_i386_)
 
 set(AltArchName "x86_64")

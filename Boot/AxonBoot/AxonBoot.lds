@@ -23,16 +23,22 @@ SECTIONS {
     }
     .data32 : ALIGN(0x1000) {
         _DATA32_START = .;
-        *.o(.data, .bss)
+        *.o(.data*, .bss)
         _DATA32_END = .;
     }
     .rodata32 : ALIGN(0x1000) {
         _RODATA32_START = .;
-        *.o(.rodata)
+        *.o(.rodata*)
         _RODATA32_END = .;
     }
     .eh_frame : {
         *.o(.eh_frame)
+    }
+    .libstext32 : ALIGN(0x1000) {
+        *.a(.text)
+    }
+    .libsdata32 : ALIGN(0x1000) {
+        *.a(.data*)
     }
     _AXONBOOT_END_ADDR = .;
     /DISCARD/ : {

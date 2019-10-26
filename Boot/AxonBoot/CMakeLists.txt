@@ -1,6 +1,6 @@
 
 
-add_executable(AxonBoot AxonBoot.cpp Util/Main.cpp)
+add_executable(AxonBoot AxonBoot.cpp Util/Main.cpp Util/EarlyScreenPrinter.cpp Util/EarlyScreenPrinter.hpp)
 AddLinkerScript(AxonBoot AxonBoot.lds)
 set_property(TARGET AxonBoot APPEND PROPERTY OUTPUT_NAME AXONBOOT)
 
@@ -13,10 +13,12 @@ set(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> <INCLUDES> <FLAGS> 
 
 AddCompileFlagsLang("-m32" C)
 AddCompileFlagsLang("-m32" CXX)
+add_definitions(-D_X86_ -D_i386_)
 
 target_include_directories(AxonBoot PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(AxonBoot PUBLIC ${CMAKE_SOURCE_DIR}/common/include)
 
+target_link_libraries(AxonBoot CRuntimeLibrary)
 if (${Arch} STREQUAL "amd64")
     add_subdirectory(x86)
 endif ()
