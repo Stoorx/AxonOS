@@ -30,15 +30,15 @@ VoidPtr memset(VoidPtr dst, Int c, SizeT count) {
     
     if (((Word)currentAddress & 0x2u) != 0) { // align to 4th address
         *((UShortPtr)currentAddress++) = (UShort)fillValue;
-        currentCountLeft -= sizeof(UShortPtr);
+        currentCountLeft -= sizeof(UShort);
     }
     
     if (currentCountLeft == 0)
         return dst;
     
-    // fill with ints while it possible
+    // fill with ints while it is possible
     for (; currentCountLeft >= sizeof(UInt); currentCountLeft -= sizeof(UInt)) {
-        *((UShortPtr)currentAddress++) = (UShort)fillValue;
+        *((UIntPtr)currentAddress++) = fillValue;
     }
     
     if (currentCountLeft == 0)
@@ -51,7 +51,7 @@ VoidPtr memset(VoidPtr dst, Int c, SizeT count) {
     
     // 2 or 3 elements left
     *((UShortPtr)currentAddress++) = (UShort)fillValue;
-    currentCountLeft -= sizeof(UShortPtr);
+    currentCountLeft -= sizeof(UShort);
     
     if (currentCountLeft == 0)
         return dst;
