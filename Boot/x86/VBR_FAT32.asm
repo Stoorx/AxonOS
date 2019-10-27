@@ -203,6 +203,7 @@ get_next_cluster:
 push ebx
 push es
 push di
+push ecx
     push eax
     shr eax, 8 ; eax contains fat frame number
 
@@ -227,6 +228,7 @@ push di
     add ebx, FS_BUFFER
     mov eax, dword [ebx]
     and eax, 0x0FFFFFFF ; 6b
+pop ecx
 pop di
 pop es
 pop ebx

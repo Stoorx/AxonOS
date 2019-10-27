@@ -31,14 +31,14 @@ SECTIONS {
         *.o(.rodata*)
         _RODATA32_END = .;
     }
-    .eh_frame : {
-        *.o(.eh_frame)
-    }
     .libstext32 : ALIGN(0x1000) {
-        *.a(.text)
+        lib*.a(.text*)
     }
     .libsdata32 : ALIGN(0x1000) {
-        *.a(.data*)
+        lib*.a(.data*)
+    }
+    .eh_frame : ALIGN(0x1000) {
+        *.o(.eh_frame)
     }
     _AXONBOOT_END_ADDR = .;
     /DISCARD/ : {

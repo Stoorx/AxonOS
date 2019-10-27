@@ -2,22 +2,24 @@
 // Created by Stoorx on 26.10.2019.
 //
 #include <Types.h>
+#include "memset.h"
 
 VoidPtr memset(VoidPtr dst, Int c, SizeT count) {
     BytePtr currentAddress   = dst;
     SizeT   currentCountLeft = count;
     UInt    fillValue        = (UInt)c & 0xFFu;
-    fillValue = fillValue |
-                fillValue << 8u |
-                fillValue << 16u |
-                fillValue << 24u;
+    fillValue = fillValue
+                | fillValue << 8u
+                | fillValue << 16u
+                | fillValue << 24u;
     
     if (currentCountLeft == 0)
         return dst;
     
     if (((Word)currentAddress & 0x1u) != 0) { // align to even address
-        *currentAddress++ = (Byte)fillValue;
-        currentCountLeft--;
+        *currentAddress = (Byte)fillValue;
+        currentAddress += sizeof(Byte);
+        currentCountLeft -= sizeof(Byte);
     }
     
     if (currentCountLeft == 0)
@@ -29,7 +31,8 @@ VoidPtr memset(VoidPtr dst, Int c, SizeT count) {
     }
     
     if (((Word)currentAddress & 0x2u) != 0) { // align to 4th address
-        *((UShortPtr)currentAddress++) = (UShort)fillValue;
+        *((UShortPtr)currentAddress) = (UShort)fillValue;
+        currentAddress += sizeof(UShort);
         currentCountLeft -= sizeof(UShort);
     }
     
@@ -37,8 +40,10 @@ VoidPtr memset(VoidPtr dst, Int c, SizeT count) {
         return dst;
     
     // fill with ints while it is possible
-    for (; currentCountLeft >= sizeof(UInt); currentCountLeft -= sizeof(UInt)) {
-        *((UIntPtr)currentAddress++) = fillValue;
+    for (; currentCountLeft >= sizeof(UInt);) {
+        *((UIntPtr)currentAddress) = fillValue;
+        currentAddress += sizeof(UInt);
+        currentCountLeft -= sizeof(UInt);
     }
     
     if (currentCountLeft == 0)
@@ -50,7 +55,8 @@ VoidPtr memset(VoidPtr dst, Int c, SizeT count) {
     }
     
     // 2 or 3 elements left
-    *((UShortPtr)currentAddress++) = (UShort)fillValue;
+    *((UShortPtr)currentAddress) = (UShort)fillValue;
+    currentAddress += sizeof(UShort);
     currentCountLeft -= sizeof(UShort);
     
     if (currentCountLeft == 0)

@@ -66,9 +66,9 @@ set(CMAKE_CXX_COMPILE_OBJECT
 
 function(CreateBootSectorTarget targetName asmFile)
     add_custom_command(
-            OUTPUT ${targetName}
+            OUTPUT ${targetName}-f
             COMMAND ${CMAKE_ASM_NASM_COMPILER} -o ${targetName} -f bin ${asmFile}
             DEPENDS ${asmFile})
     set_source_files_properties(${targetName} PROPERTIES GENERATED TRUE)
-    add_custom_target(${targetName} ALL DEPENDS ${targetName} SOURCES ${asmFile})
+    add_custom_target(${targetName} ALL DEPENDS ${targetName}-f SOURCES ${asmFile})
 endfunction()

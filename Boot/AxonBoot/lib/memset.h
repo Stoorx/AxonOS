@@ -4,10 +4,15 @@
 
 #pragma once
 
+#include <Types.h>
 
-class memset{
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-};
+VoidPtr memset(VoidPtr dst, Int c, SizeT count);
 
-
+#ifdef __cplusplus
+}
+#endif
 

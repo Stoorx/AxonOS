@@ -29,10 +29,12 @@ include(sdk/cmake/version.cmake)
 # TODO
 
 # Include directories TODO
+include_directories(common/include)
+include_directories(${CMAKE_SOURCE_DIR})
 
 # Add subdirectories TODO
 add_subdirectory(Boot)
 #add_subdirectory(Kernel)
-#add_subdirectory(Test)
+add_subdirectory(Test)
 add_subdirectory(tools)
 

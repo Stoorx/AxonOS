@@ -43,11 +43,13 @@ start:
     ; CS=0x0, IP = 0x1000
 
     ; init registers
+    cli
     xor ax, ax
     mov ds, ax
     mov es, ax
     mov ss, ax
     mov sp, LOADER_STACK_16
+    sti
 
     in al, 0x92
     test al, 2

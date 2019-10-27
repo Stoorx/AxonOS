@@ -5,8 +5,8 @@
 #include "EarlyScreenPrinter.hpp"
 
 void EarlyScreenPrinter::print(const Char8* message, UShort color) {
-    auto     * currentPosition = framebufferBase + currentRow * totalColumns + currentRow;
-    for (auto* currentChar     = (BytePtr)message;
+    UShortPtr currentPosition = framebufferBase + currentRow * totalColumns + currentColumn;
+    for (auto* currentChar = (BytePtr)message;
          *currentChar != '\0';
          currentChar++, currentPosition++, currentColumn++) {
         if (*currentChar == '\n') {
@@ -14,7 +14,7 @@ void EarlyScreenPrinter::print(const Char8* message, UShort color) {
             continue;
         }
         adjustPositions();
-        *framebufferBase = *currentChar | color;
+        *currentPosition = *currentChar | color;
     }
 }
 
@@ -59,8 +59,8 @@ void EarlyScreenPrinter::adjustPositions() {
     if (currentColumn >= totalColumns) {
         currentColumn = 0;
         currentRow++;
-        if (currentRow >= totalColumns) {
-            scrollUp(1);
-        }
+    }
+    if (currentRow >= totalRows) {
+        scrollUp(1);
     }
 }
