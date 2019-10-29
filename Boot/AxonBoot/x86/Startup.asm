@@ -107,8 +107,9 @@ protected_entry:
     mov ds, ax
     mov ss, ax
     mov es, ax
-    ;mov dword [0xB8000], 0x07320733 ; Prints "32"
-    ; TODO: initialize protected stack and C-decl function call
+    mov esp, LOADER_STACK_32
+    push 0
+    push 0
     call main
     ; pass
 hlt_system:

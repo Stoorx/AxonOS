@@ -1,20 +1,15 @@
 #include "AxonBoot.hpp"
 #include <version.h>
 #include <Util/EarlyScreenPrinter.hpp>
-
+#include <x86/RealModeCall.h>
 
 void AxonBoot::main() {
+    
+    RealModeContext rmContext = {};
+    rmContext.eax = 0x0003;
+    realModeIntExecute(&rmContext, 0x10);
+    
     auto printer = EarlyScreenPrinter();
     printer.print("AxonBoot-");
-    
-    printer.println("1234");
-    
     printer.println(KERNEL_VERSION_STR);
-    
-    int chars = 0x30303030;
-    while (true) {
-        printer.println((Char8Ptr)&chars);
-        chars++;
-    }
-    
 }
