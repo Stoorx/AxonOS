@@ -8,3 +8,5 @@ add_executable(IdtGateDescriptorTest32 Kernel/Memory/Arch/x86/IdtGateDescriptor3
 
 add_executable(AvlTreeTest Util/AvlTreeTest.cpp ../Util/Src/AvlTree.c ../tools/Catch2/CatchMain.cpp)
 add_executable(StackAllocatorTest Kernel/Memory/Allocators/StackAllocatorTest.cpp ../Kernel/Src/Memory/Allocators/StackAllocator.c ../tools/Catch2/CatchMain.cpp)
+
+add_executable(Experimental Experimental.cpp)

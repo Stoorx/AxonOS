@@ -101,7 +101,7 @@ pm16Bit:
 
     ; Emulate int with iret
     mov ebx, dword [ebp + A_INT_NUM]
-    shl bx, 4 ; get address of interrupt vector
+    shl bx, 2 ; get address of interrupt vector
     pushf
     mov ax, [bx + 2] ; vector segment
     push ax
